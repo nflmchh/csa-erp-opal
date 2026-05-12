@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(composer create-project *)",
+      "Bash(php artisan *)",
+      "Bash(npm run *)",
+      "Bash(php -m)",
+      "Bash(php -r \"echo class_exists\\('SimpleSoftwareIO\\\\QrCode\\\\Facades\\\\QrCode'\\) ? 'QrCode OK' : 'NOT found';\")"
+    ]
+  }
+}

@@ -1,0 +1,28 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('transfer_items', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('transfer_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('product_variant_id')->constrained();
+            $table->unsignedInteger('qty_requested');
+            $table->unsignedInteger('qty_sent')->default(0);
+            $table->unsignedInteger('qty_received')->default(0);
+            $table->timestamps();
+
+            $table->unique(['transfer_id', 'product_variant_id'], 'uq_transfer_variant');
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('transfer_items');
+    }
+};

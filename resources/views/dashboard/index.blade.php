@@ -1,0 +1,480 @@
+@extends('layouts.app')
+
+@section('title', 'Dashboard')
+@section('page-title', 'Dashboard')
+
+@section('content')
+    <div class="space-y-6">
+
+        {{-- 1. Welcome Banner & Filter --}}
+        <div class="bg-gradient-to-r from-indigo-600 to-indigo-800 rounded-xl p-6 text-white flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm">
+            <div>
+                <h2 class="text-xl font-bold">Selamat datang, {{ Auth::user()->name }}!</h2>
+                <p class="text-indigo-200 text-sm mt-1">
+                    {{ now()->isoFormat('dddd, D MMMM Y') }} · Role:
+                    <span class="capitalize font-medium">{{ Auth::user()->getRoleNames()->first() }}</span>
+                </p>
+            </div>
+
+            <form method="GET" action="{{ route('dashboard') }}" class="shrink-0 flex items-center gap-3 flex-wrap md:justify-end">
+                @if(request('store_date_filter'))<input type="hidden" name="store_date_filter" value="{{ request('store_date_filter') }}">@endif
+                @if(request('top_date_filter'))<input type="hidden" name="top_date_filter" value="{{ request('top_date_filter') }}">@endif
+                
+                <!-- Filter Gudang Baru -->
+                <div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                    <label for="warehouse_id" class="text-xs font-medium text-white/90 whitespace-nowrap hidden sm:block">Gudang:</label>
+                    <div class="relative min-w-[160px]">
+                        <select name="warehouse_id" id="warehouse_id" onchange="this.form.submit()" class="appearance-none w-full rounded-lg border border-white/20 bg-white/10 backdrop-blur-md px-3 py-2 pr-8 text-sm text-white shadow-sm transition focus:border-white focus:ring-2 focus:ring-white/30 outline-none cursor-pointer hover:bg-white/15">
+                            <option value="" class="text-gray-900">Semua Gudang</option>
+                            <!-- Pastikan variabel $warehouses dikirim dari DashboardController -->
+                            @if(isset($warehouses))
+                                @foreach($warehouses as $warehouse)
+                                    <option value="{{ $warehouse->id }}" class="text-gray-900" {{ request('warehouse_id') == $warehouse->id ? 'selected' : '' }}>{{ $warehouse->name }}</option>
+                                @endforeach
+                            @endif
+                        </select>
+                        <div class="pointer-events-none absolute inset-y-0 right-2 flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white/70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                        </div>
+                    </div>  
+                </div>
+
+                <!-- Filter Toko -->
+                <div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                    <label for="store_id" class="text-xs font-medium text-white/90 whitespace-nowrap hidden sm:block">Toko:</label>
+                    <div class="relative min-w-[160px]">
+                        <select name="store_id" id="store_id" onchange="this.form.submit()" class="appearance-none w-full rounded-lg border border-white/20 bg-white/10 backdrop-blur-md px-3 py-2 pr-8 text-sm text-white shadow-sm transition focus:border-white focus:ring-2 focus:ring-white/30 outline-none cursor-pointer hover:bg-white/15">
+                            <option value="" class="text-gray-900">Semua Toko</option>
+                            @foreach($stores as $store)
+                                <option value="{{ $store->id }}" class="text-gray-900" {{ request('store_id') == $store->id ? 'selected' : '' }}>{{ $store->name }}</option>
+                            @endforeach
+                        </select>
+                        <div class="pointer-events-none absolute inset-y-0 right-2 flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white/70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                        </div>
+                    </div>  
+                </div>
+            </form>
+        </div>
+
+        {{-- 2. FINANCIAL & EXECUTIVE SUMMARY (KHUSUS SUPERADMIN / OWNER) --}}
+        @hasanyrole('superadmin|owner')
+        @php
+            $incomeTotal = $monthSales ?? 0;
+            $expenseTotal = $totalExpense ?? 0; 
+            $profitTotal = $incomeTotal - $expenseTotal;
+        @endphp
+        @if(auth()->user()->hasAnyRole(['superadmin', 'owner']))
+        <div class="space-y-4">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-bold text-gray-800">Ringkasan Reward & Dividen Tahun {{ now()->year }}</h3>
+                <span class="text-xs font-medium bg-gray-100 text-gray-500 px-3 py-1 rounded-full uppercase tracking-widest">Confidential</span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {{-- Card Reward Toko --}}
+                <div class="bg-white rounded-2xl shadow-sm border border-indigo-100 p-6 relative overflow-hidden">
+                    <div class="absolute -right-4 -top-4 w-24 h-24 bg-indigo-50 rounded-full opacity-50"></div>
+                    <p class="text-xs font-semibold text-indigo-400 uppercase">Total Akumulasi Reward Toko</p>
+                    <div class="mt-2 flex items-baseline gap-2">
+                        <span class="text-3xl font-black text-gray-900">Rp {{ number_format($rewardToko, 0, ',', '.') }}</span>
+                    </div>
+                    <div class="mt-4 flex items-center gap-2">
+                        <div class="w-2 h-2 rounded-full bg-indigo-500"></div>
+                        <p class="text-[11px] text-gray-500">Dihitung dari {{ number_format($totalItemsSold) }} pcs produk terjual.</p>
+                    </div>
+                </div>
+
+                {{-- Card Dividen Owner --}}
+                <div class="bg-white rounded-2xl shadow-sm border border-emerald-100 p-6 relative overflow-hidden">
+                    <div class="absolute -right-4 -top-4 w-24 h-24 bg-emerald-50 rounded-full opacity-50"></div>
+                    <p class="text-xs font-semibold text-emerald-400 uppercase">Total Dividen Owner</p>
+                    <div class="mt-2 flex items-baseline gap-2">
+                        <span class="text-3xl font-black text-emerald-600">Rp {{ number_format($rewardOwner, 0, ',', '.') }}</span>
+                    </div>
+                    <div class="mt-4 flex items-center gap-2">
+                        <div class="w-2 h-2 rounded-full bg-emerald-500"></div>
+                        <p class="text-[11px] text-gray-500">Alokasi keuntungan bersih pribadi tahun {{ now()->year }}.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        @endif
+        <div class="mb-2">
+            <h3 class="text-lg font-bold text-gray-800 border-l-4 border-indigo-500 pl-3">Ringkasan Finansial Eksekutif</h3>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {{-- Interactive Donut Chart --}}
+            <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 flex flex-col">
+                 <h3 class="text-sm font-semibold text-gray-800 mb-2">📊 Arus Kas (Bulan Ini)</h3>
+                 <p class="text-xs text-gray-500 mb-4">Klik pada bagian grafik warna-warni di bawah untuk melihat detail pada kartu di sebelahnya.</p>
+                 <div class="relative flex-1 min-h-[250px] w-full flex items-center justify-center cursor-pointer">
+                     <canvas id="financeDonutChart"></canvas>
+                 </div>
+            </div>
+
+            {{-- Preview Card for Donut Chart --}}
+            <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-8 flex flex-col justify-center items-center text-center relative overflow-hidden" id="financePreviewCard">
+                 <div class="absolute -top-10 -right-10 w-40 h-40 bg-gray-50 rounded-full opacity-50 pointer-events-none" id="previewBg"></div>
+                 
+                 <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-6 z-10 transition-colors duration-300" id="previewIconBox">
+                    <svg class="w-8 h-8 text-gray-400" id="previewIcon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"/></svg>
+                 </div>
+                 <p class="text-sm text-gray-500 font-bold uppercase tracking-widest z-10" id="previewTitle">Pilih Segmen Grafik</p>
+                 <p class="text-4xl font-bold text-gray-300 mt-3 z-10 transition-colors duration-300" id="previewValue">Rp 0</p>
+                 <p class="text-sm text-gray-400 mt-4 z-10 px-4 max-w-md" id="previewDesc">Grafik preview akan muncul di sini saat Anda mengklik salah satu warna pada grafik donat di sebelah kiri.</p>
+            </div>
+        </div>
+        @endhasanyrole
+
+        {{-- 3. STATISTIK SISTEM & MODUL LABEL --}}
+        <div class="mb-2 mt-8">
+            <h3 class="text-lg font-bold text-gray-800 border-l-4 border-purple-500 pl-3">Statistik Sistem & Modul</h3>
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            
+            <a href="{{ route('master.brands.index') }}" class="bg-white rounded-xl p-4 border border-gray-200 shadow-sm hover:border-purple-300 transition-colors relative overflow-hidden group">
+                <span class="absolute top-0 right-0 bg-gray-100 text-gray-500 text-[9px] font-bold px-2 py-1 rounded-bl-lg group-hover:bg-purple-100 group-hover:text-purple-700 transition-colors">MASTER DATA</span>
+                <p class="text-xs text-gray-500 font-medium uppercase tracking-wide mt-2">Brand Aktif</p>
+                <div class="flex items-end justify-between mt-1">
+                    <p class="text-2xl font-bold text-gray-900">{{ $stats['brands'] }}</p>
+                    <svg class="w-6 h-6 text-purple-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg>
+                </div>
+            </a>
+
+            <a href="{{ route('products.index') }}" class="bg-white rounded-xl p-4 border border-gray-200 shadow-sm hover:border-indigo-300 transition-colors relative overflow-hidden group">
+                <span class="absolute top-0 right-0 bg-gray-100 text-gray-500 text-[9px] font-bold px-2 py-1 rounded-bl-lg group-hover:bg-indigo-100 group-hover:text-indigo-700 transition-colors">KATALOG</span>
+                <p class="text-xs text-gray-500 font-medium uppercase tracking-wide mt-2">Produk Aktif</p>
+                <div class="flex items-end justify-between mt-1">
+                    <p class="text-2xl font-bold text-gray-900">{{ $stats['products'] }}</p>
+                    <svg class="w-6 h-6 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
+                </div>
+            </a>
+
+            <a href="{{ route('labels.picker') }}" class="bg-white rounded-xl p-4 border border-gray-200 shadow-sm hover:border-teal-300 transition-colors relative overflow-hidden group">
+                <span class="absolute top-0 right-0 bg-gray-100 text-gray-500 text-[9px] font-bold px-2 py-1 rounded-bl-lg group-hover:bg-teal-100 group-hover:text-teal-700 transition-colors">KATALOG</span>
+                <p class="text-xs text-gray-500 font-medium uppercase tracking-wide mt-2">Total SKU Varian</p>
+                <div class="flex items-end justify-between mt-1">
+                    <p class="text-2xl font-bold text-gray-900">{{ $stats['variants'] }}</p>
+                    <svg class="w-6 h-6 text-teal-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg>
+                </div>
+            </a>
+
+            <a href="{{ route('master.warehouses.index') }}" class="bg-white rounded-xl p-4 border border-gray-200 shadow-sm hover:border-blue-300 transition-colors relative overflow-hidden group">
+                <span class="absolute top-0 right-0 bg-gray-100 text-gray-500 text-[9px] font-bold px-2 py-1 rounded-bl-lg group-hover:bg-blue-100 group-hover:text-blue-700 transition-colors">MASTER DATA</span>
+                <p class="text-xs text-gray-500 font-medium uppercase tracking-wide mt-2">Titik Gudang</p>
+                <div class="flex items-end justify-between mt-1">
+                    <p class="text-2xl font-bold text-gray-900">{{ $stats['warehouses'] }}</p>
+                    <svg class="w-6 h-6 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z" /></svg>
+                </div>
+            </a>
+
+            <a href="{{ route('master.stores.index') }}" class="bg-white rounded-xl p-4 border border-gray-200 shadow-sm hover:border-green-300 transition-colors relative overflow-hidden group">
+                <span class="absolute top-0 right-0 bg-gray-100 text-gray-500 text-[9px] font-bold px-2 py-1 rounded-bl-lg group-hover:bg-green-100 group-hover:text-green-700 transition-colors">MASTER DATA</span>
+                <p class="text-xs text-gray-500 font-medium uppercase tracking-wide mt-2">Cabang Toko</p>
+                <div class="flex items-end justify-between mt-1">
+                    <p class="text-2xl font-bold text-gray-900">{{ $stats['stores'] }}</p>
+                    <svg class="w-6 h-6 text-green-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>
+                </div>
+            </a>
+        </div>
+
+        {{-- 4. INVENTORY & RETURNS --}}
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="bg-white rounded-xl p-4 border border-gray-200 shadow-sm relative overflow-hidden">
+                <span class="absolute top-0 right-0 bg-blue-50 text-blue-600 text-[9px] font-bold px-2 py-1 rounded-bl-lg">GUDANG</span>
+                <p class="text-[10px] text-gray-500 font-medium uppercase tracking-wide mt-2">Valuasi Aset Gudang</p>
+                <p class="text-lg font-bold text-gray-900 mt-1">Rp {{ number_format($warehouseStockValue, 0, ',', '.') }}</p>
+            </div>
+            <div class="bg-white rounded-xl p-4 border border-gray-200 shadow-sm relative overflow-hidden">
+                <span class="absolute top-0 right-0 bg-green-50 text-green-600 text-[9px] font-bold px-2 py-1 rounded-bl-lg">TOKO</span>
+                <p class="text-[10px] text-gray-500 font-medium uppercase tracking-wide mt-2">Valuasi Aset Toko</p>
+                <p class="text-lg font-bold text-gray-900 mt-1">Rp {{ number_format($storeStockValue, 0, ',', '.') }}</p>
+            </div>
+            <a href="{{ route('returns.customer.index') }}" class="bg-white rounded-xl p-4 border border-gray-200 shadow-sm hover:border-orange-300 transition-colors relative overflow-hidden group">
+                <span class="absolute top-0 right-0 bg-orange-50 text-orange-600 text-[9px] font-bold px-2 py-1 rounded-bl-lg">RETUR</span>
+                <p class="text-[10px] text-gray-500 font-medium uppercase tracking-wide mt-2">Retur (Bulan Ini)</p>
+                <p class="text-xl font-bold text-gray-900 mt-1">{{ $monthReturns }}</p>
+            </a>
+            <a href="{{ route('returns.customer.index') }}" class="bg-white rounded-xl p-4 border border-gray-200 shadow-sm hover:border-red-300 transition-colors relative overflow-hidden group">
+                <span class="absolute top-0 right-0 bg-red-50 text-red-600 text-[9px] font-bold px-2 py-1 rounded-bl-lg">RETUR</span>
+                <p class="text-[10px] text-gray-500 font-medium uppercase tracking-wide mt-2">Retur Pending</p>
+                <p class="text-xl font-bold {{ $pendingReturns > 0 ? 'text-red-600' : 'text-gray-900' }} mt-1">{{ $pendingReturns }}</p>
+            </a>
+        </div>
+
+        {{-- 5. QUICK ACCESS & TOP SELLING --}}
+        <div class="flex flex-col lg:flex-row gap-4">
+            <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5 lg:w-1/2 w-full">
+                <h3 class="text-sm font-semibold text-gray-800 mb-4">🚀 Akses Menu Cepat</h3>
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                    @php
+                        $quickLinks = [
+                            ['route' => 'catalog.index', 'label' => 'Katalog', 'color' => 'bg-indigo-50 text-indigo-700', 'icon' => 'M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z'],
+                            ['route' => 'products.index', 'label' => 'Produk', 'color' => 'bg-purple-50 text-purple-700', 'icon' => 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4'],
+                            ['route' => 'warehouse.stock.index', 'label' => 'Stok Gudang', 'color' => 'bg-blue-50 text-blue-700', 'icon' => 'M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z'],
+                            ['route' => 'warehouse.shipments.index', 'label' => 'Pengiriman', 'color' => 'bg-cyan-50 text-cyan-700', 'icon' => 'M8 4H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-2m-4-1v8m0 0l3-3m-3 3L9 8m-5 5h2.586a1 1 0 01.707.293l2.414 2.414a1 1 0 00.707.293h3.172a1 1 0 00.707-.293l2.414-2.414a1 1 0 01.707-.293H20'],
+                            ['route' => 'transfers.index', 'label' => 'Transfer', 'color' => 'bg-orange-50 text-orange-700', 'icon' => 'M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4'],
+                            ['route' => 'returns.customer.index', 'label' => 'Retur', 'color' => 'bg-red-50 text-red-700', 'icon' => 'M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6'],
+                            ['route' => 'reports.index', 'label' => 'Laporan', 'color' => 'bg-yellow-50 text-yellow-700', 'icon' => 'M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'],
+                        ]
+                    @endphp
+                    @foreach($quickLinks as $link)
+                        <a href="{{ route($link['route']) }}" class="flex flex-col items-center gap-2 p-3 rounded-xl {{ $link['color'] }} hover:opacity-80 transition-opacity text-center">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $link['icon'] }}" /></svg>
+                            <span class="text-xs font-medium leading-tight">{{ $link['label'] }}</span>
+                        </a>
+                    @endforeach
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5 lg:w-1/2 w-full flex flex-col">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-sm font-semibold text-gray-800">🏆 Top Selling Produk</h3>
+                    <form method="GET" action="{{ route('dashboard') }}" class="flex items-center gap-2 shrink-0">
+                        @if(request('warehouse_id'))<input type="hidden" name="warehouse_id" value="{{ request('warehouse_id') }}">@endif
+                        @if(request('store_id'))<input type="hidden" name="store_id" value="{{ request('store_id') }}">@endif
+                        @if(request('store_date_filter'))<input type="hidden" name="store_date_filter" value="{{ request('store_date_filter') }}">@endif
+                        
+                        <select name="top_date_filter" onchange="this.form.submit()" class="bg-gray-50 border border-gray-300 text-gray-900 text-[11px] rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block py-1 pl-2 pr-8 outline-none cursor-pointer">
+                            <option value="today" {{ $topDateFilter === 'today' ? 'selected' : '' }}>Hari Ini</option>
+                            <option value="7_days" {{ $topDateFilter === '7_days' ? 'selected' : '' }}>7 Hari</option>
+                            <option value="30_days" {{ $topDateFilter === '30_days' ? 'selected' : '' }}>30 Hari</option>
+                            <option value="this_month" {{ $topDateFilter === 'this_month' ? 'selected' : '' }}>Bulan Ini</option>
+                        </select>
+                    </form>
+                </div>
+                <div class="space-y-2 flex-1 max-h-[280px] overflow-y-auto pr-2">
+                    @forelse($topProducts as $idx => $product)
+                        <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                            <span class="flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold {{ $idx < 3 ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-600' }}">{{ $idx + 1 }}</span>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-medium text-gray-800 truncate">{{ $product->product_name }}</p>
+                                <p class="text-xs text-gray-400">Rp {{ number_format($product->total_revenue, 0, ',', '.') }}</p>
+                            </div>
+                            <div class="text-right shrink-0">
+                                <p class="text-sm font-semibold text-indigo-600">{{ number_format($product->total_qty) }} pcs</p>
+                            </div>
+                        </div>
+                    @empty
+                        <p class="text-sm text-gray-400 text-center py-8">Belum ada data penjualan</p>
+                    @endforelse
+                </div>
+            </div>
+        </div>
+
+        {{-- 6. LAINNYA: ANALITIK PENJUALAN TOKO DLL --}}
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5 lg:col-span-2">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-sm font-semibold text-gray-800">🏪 Penjualan per Toko</h3>
+                    <form method="GET" action="{{ route('dashboard') }}" class="flex items-center gap-2">
+                        @if(request('warehouse_id'))<input type="hidden" name="warehouse_id" value="{{ request('warehouse_id') }}">@endif
+                        @if(request('store_id'))<input type="hidden" name="store_id" value="{{ request('store_id') }}">@endif
+                        @if(request('top_date_filter'))<input type="hidden" name="top_date_filter" value="{{ request('top_date_filter') }}">@endif
+                        <select name="store_date_filter" onchange="this.form.submit()" class="bg-gray-50 border border-gray-300 text-gray-900 text-[11px] rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block py-1 pl-2 pr-8 outline-none cursor-pointer">
+                            <option value="today" {{ $storeDateFilter === 'today' ? 'selected' : '' }}>Hari Ini</option>
+                            <option value="7_days" {{ $storeDateFilter === '7_days' ? 'selected' : '' }}>7 Hari Terakhir</option>
+                            <option value="30_days" {{ $storeDateFilter === '30_days' ? 'selected' : '' }}>30 Hari Terakhir</option>
+                            <option value="this_month" {{ $storeDateFilter === 'this_month' ? 'selected' : '' }}>Bulan Ini</option>
+                        </select>
+                    </form>
+                </div>
+                <div class="relative h-[300px] w-full"><canvas id="salesPerStore"></canvas></div>
+            </div>
+
+            <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5 flex flex-col">
+                <div class="flex items-center justify-between mb-4"><h3 class="text-sm font-semibold text-gray-800">🏪 Performa Toko</h3></div>
+                <div class="relative flex-1 min-h-[250px] w-full flex items-center justify-center"><canvas id="storeChart"></canvas></div>
+            </div>
+
+            <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5 lg:col-span-2">
+                <div class="flex items-center justify-between mb-4"><h3 class="text-sm font-semibold text-gray-800">📈 Tren Penjualan (30 Hari)</h3></div>
+                <div class="relative h-[300px] w-full"><canvas id="revenueChart"></canvas></div>
+            </div>
+
+            <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5 flex flex-col">
+                <div class="flex items-center justify-between mb-4"><h3 class="text-sm font-semibold text-gray-800">💳 Metode Pembayaran</h3></div>
+                <div class="relative flex-1 min-h-[250px] w-full flex items-center justify-center"><canvas id="paymentChart"></canvas></div>
+            </div>
+        </div>
+
+        {{-- 7. SYSTEM INFO --}}
+        <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+            <h3 class="text-sm font-semibold text-gray-800 mb-3">Informasi Sistem</h3>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs text-gray-500">
+                <div><span class="font-medium text-gray-700">Aplikasi</span><br>SevenKey ERP v1.0</div>
+                <div><span class="font-medium text-gray-700">Laravel</span><br>{{ app()->version() }}</div>
+                <div><span class="font-medium text-gray-700">PHP</span><br>{{ PHP_VERSION }}</div>
+                <div><span class="font-medium text-gray-700">Login Terakhir</span><br>{{ Auth::user()->last_login_at?->diffForHumans() ?? 'Baru pertama kali' }}</div>
+            </div>
+        </div>
+
+    </div>
+@endsection
+
+@push('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+
+            // ── Interactive Finance Donut (NEW) ──
+            @hasanyrole('superadmin|owner')
+            const ctxFinance = document.getElementById('financeDonutChart');
+            if (ctxFinance) {
+                const fLabels = ['Pendapatan', 'Pengeluaran', 'Laba Bersih'];
+                const fData = [{{ $incomeTotal }}, {{ $expenseTotal }}, {{ $profitTotal }}];
+                const fColors = ['#3b82f6', '#ef4444', '#10b981']; // Biru, Merah, Hijau
+                const fBgColors = ['#eff6ff', '#fef2f2', '#ecfdf5']; 
+                const fIcons = [
+                    '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />',
+                    '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" />',
+                    '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />'
+                ];
+                const fDesc = [
+                    'Total pendapatan kotor dari penjualan keseluruhan berdasarkan filter.',
+                    'Total biaya pengeluaran (operasional, dll) berdasarkan filter gudang/toko.',
+                    'Sisa keuntungan bersih (Pendapatan dikurangi Pengeluaran).'
+                ];
+
+                new Chart(ctxFinance, {
+                    type: 'doughnut',
+                    data: {
+                        labels: fLabels,
+                        datasets: [{
+                            data: fData,
+                            backgroundColor: fColors,
+                            borderWidth: 2,
+                            borderColor: '#ffffff',
+                            hoverOffset: 10
+                        }]
+                    },
+                    options: {
+                        maintainAspectRatio: false,
+                        cutout: '70%',
+                        plugins: {
+                            legend: { position: 'bottom', labels: { usePointStyle: true, padding: 20 } }
+                        },
+                        onClick: function(event, elements) {
+                            if (elements.length > 0) {
+                                const idx = elements[0].index;
+                                
+                                // Update Preview DOM Elements
+                                document.getElementById('previewTitle').innerText = fLabels[idx];
+                                document.getElementById('previewValue').innerText = 'Rp ' + fData[idx].toLocaleString('id');
+                                document.getElementById('previewValue').style.color = fColors[idx];
+                                document.getElementById('previewDesc').innerText = fDesc[idx];
+                                
+                                const iconBox = document.getElementById('previewIconBox');
+                                iconBox.style.backgroundColor = fBgColors[idx];
+                                iconBox.style.color = fColors[idx];
+                                
+                                document.getElementById('previewIcon').innerHTML = fIcons[idx];
+                                document.getElementById('previewIcon').style.color = fColors[idx];
+                            }
+                        }
+                    }
+                });
+            }
+            @endhasanyrole
+
+            // ── Sales by Store (BAR) ──
+            const ctxSalesStore = document.getElementById('salesPerStore');
+            if (ctxSalesStore) {
+                const barStoreLabels = @json($salesByStore->pluck('store_name'));
+                const barStoreData = @json($salesByStore->pluck('total_revenue'));
+                const barStoreColors = ['#6366f1', '#8b5cf6', '#a78bfa', '#c4b5fd', '#818cf8', '#4f46e5'];
+
+                new Chart(ctxSalesStore, {
+                    type: 'bar',
+                    data: {
+                        labels: barStoreLabels,
+                        datasets: [{
+                            label: 'Revenue',
+                            data: barStoreData,
+                            backgroundColor: barStoreLabels.map((_, i) => barStoreColors[i % barStoreColors.length]),
+                            borderRadius: 4,
+                            maxBarThickness: 48
+                        }]
+                    },
+                    options: {
+                        maintainAspectRatio: false,
+                        indexAxis: 'y',
+                        responsive: true,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            x: { ticks: { callback: v => 'Rp ' + (v / 1000).toLocaleString('id') + 'k' }, grid: { color: '#f3f4f6' } },
+                            y: { grid: { display: false } }
+                        }
+                    }
+                });
+            }
+
+            // ── Revenue Chart (LINE) ──
+            const ctxRev = document.getElementById('revenueChart');
+            if (ctxRev) {
+                const revenueLabels = @json($chartLabels);
+                const revenueData = @json($chartRevenue);
+                const ordersData = @json($chartOrders);
+
+                new Chart(ctxRev, {
+                    type: 'line',
+                    data: {
+                        labels: revenueLabels,
+                        datasets: [
+                            {
+                                label: 'Pendapatan', data: revenueData, borderColor: '#4f46e5',
+                                backgroundColor: 'rgba(79, 70, 229, 0.1)', borderWidth: 2, fill: true,
+                                tension: 0.4, pointRadius: 0, pointHoverRadius: 4, yAxisID: 'y'
+                            },
+                            {
+                                label: 'Jumlah Order', data: ordersData, borderColor: '#f59e0b',
+                                backgroundColor: 'rgba(245, 158, 11, 0.1)', borderWidth: 2, borderDash: [5, 5],
+                                fill: false, tension: 0.4, pointRadius: 0, pointHoverRadius: 4, yAxisID: 'y1'
+                            }
+                        ]
+                    },
+                    options: {
+                        maintainAspectRatio: false, responsive: true,
+                        plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false } },
+                        scales: {
+                            x: { grid: { display: false }, ticks: { maxTicksLimit: 10 } },
+                            y: { type: 'linear', display: true, position: 'left', grid: { color: '#f3f4f6' }, beginAtZero: true, ticks: { callback: v => 'Rp ' + (v / 1000).toLocaleString('id') + 'k' } },
+                            y1: { type: 'linear', display: true, position: 'right', grid: { display: false }, beginAtZero: true, ticks: { callback: v => v + ' trx' } }
+                        },
+                        interaction: { mode: 'nearest', axis: 'x', intersect: false }
+                    }
+                });
+            }
+
+            // ── Sales by Store (DOUGHNUT) ──
+            const ctxStorePie = document.getElementById('storeChart');
+            if (ctxStorePie) {
+                const doughnutStoreLabels = @json($salesByStore->pluck('store_name'));
+                const doughnutStoreData = @json($salesByStore->pluck('total_revenue'));
+                const doughnutStoreColors = ['#4f46e5', '#8b5cf6', '#ec4899', '#f43f5e', '#f97316', '#eab308'];
+
+                new Chart(ctxStorePie, {
+                    type: 'doughnut',
+                    data: { labels: doughnutStoreLabels, datasets: [{ data: doughnutStoreData, backgroundColor: doughnutStoreColors, borderWidth: 0, hoverOffset: 4 }] },
+                    options: { maintainAspectRatio: false, responsive: true, cutout: '65%', plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 8, padding: 15, font: { size: 11 } } }, tooltip: { callbacks: { label: function (context) { return ' Rp ' + context.raw.toLocaleString('id'); } } } } }
+                });
+            }
+
+            // ── Payment Method (DOUGHNUT) ──
+            const ctxPayPie = document.getElementById('paymentChart');
+            if (ctxPayPie) {
+                const paymentLabels = @json($paymentDistribution->pluck('method_name'));
+                const paymentData = @json($paymentDistribution->pluck('total_amount'));
+                const paymentColors = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#64748b'];
+
+                new Chart(ctxPayPie, {
+                    type: 'doughnut',
+                    data: { labels: paymentLabels.map(l => l ? l.toUpperCase() : 'UNKNOWN'), datasets: [{ data: paymentData, backgroundColor: paymentColors, borderWidth: 0, hoverOffset: 4 }] },
+                    options: { maintainAspectRatio: false, responsive: true, cutout: '65%', plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 8, padding: 15, font: { size: 11 } } }, tooltip: { callbacks: { label: function (context) { return ' Rp ' + context.raw.toLocaleString('id'); } } } } }
+                });
+            }
+
+        });
+    </script>
+@endpush
