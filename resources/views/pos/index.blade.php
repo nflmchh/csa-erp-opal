@@ -537,6 +537,14 @@ function posApp(sessionId, storeId) {
                 let data = await res.json();
                 
                 if (data.success) {
+                    // UPDATE STOK DI KATALOG LOKAL (Agar tidak perlu reload & koneksi bluetooth aman)
+                    this.cart.forEach(item => {
+                        let product = this.catalog.find(p => p.id === item.variant_id);
+                        if (product) {
+                            product.stock -= item.qty;
+                        }
+                    });
+
                     this.receiptHtmlHtml = data.html;      // Tampilkan desain di Modal
                     this.currentSaleData = data.sale;      // Simpan data mentah untuk Flutter
                     this.showReceiptModal = true;          // Munculkan Modal

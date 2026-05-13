@@ -29,6 +29,12 @@
     </div>
 
     @if(in_array($shipment->status, ['shipped', 'arrived']))
+    @php
+        $fullNo = $shipment->shipment_no;
+        $lastHyphenPos = strrpos($fullNo, '-');
+        $prefix = $lastHyphenPos !== false ? substr($fullNo, 0, $lastHyphenPos + 1) : '';
+        $expectedSuffix = $lastHyphenPos !== false ? substr($fullNo, $lastHyphenPos + 1) : $fullNo;
+    @endphp
     {{-- Receipt form (Ditambahkan ID receipt-form) --}}
     <form method="POST" id="receipt-form" action="{{ route('store.receiving.confirm', $shipment) }}" class="space-y-4">
         @csrf
@@ -72,10 +78,37 @@
         <div class="flex items-center justify-between mt-4">
             <a href="{{ route('store.receiving.index') }}" class="text-sm text-gray-500 hover:text-gray-700 hover:underline">← Batal</a>
             
-            {{-- Tombol diubah menjadi Indikator Scanner --}}
-            <div class="bg-indigo-50 border border-indigo-200 text-indigo-700 px-6 py-3 rounded-xl text-sm font-bold flex items-center gap-3 shadow-sm">
-                <svg class="w-5 h-5 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm14 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
-                Menunggu Scan Barcode Resi...
+            <div class="flex items-center gap-3">
+                {{-- Input Verifikasi Manual --}}
+                <div class="flex items-center bg-white border border-gray-200 rounded-xl px-5 py-2.5 shadow-sm focus-within:ring-2 focus-within:ring-indigo-500 focus-within:border-transparent transition-all group">
+                    <div class="flex items-center gap-3">
+                        <div class="flex flex-col">
+                            <span class="text-[10px] uppercase tracking-wider text-gray-400 font-bold leading-none mb-1">Verifikasi Manual</span>
+                            <div class="flex items-center font-mono text-sm">
+                                <span class="text-gray-300 select-none">{{ $prefix }}</span>
+                                <input type="text" id="manual-suffix-input" 
+                                    maxlength="{{ strlen($expectedSuffix) }}" 
+                                    placeholder="{{ str_repeat('·', strlen($expectedSuffix)) }}"
+                                    class="w-14 p-0 border-none focus:ring-0 font-bold text-indigo-600 bg-transparent placeholder-gray-200"
+                                    autocomplete="off">
+                            </div>
+                        </div>
+                        <div id="check-icon" class="text-green-500 opacity-0 transition-opacity">
+                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Indikator Scanner (Masih Aktif) --}}
+                <div class="bg-indigo-50 border border-indigo-100 text-indigo-700 px-5 py-2.5 rounded-xl flex items-center gap-3 shadow-sm">
+                    <div class="flex flex-col">
+                        <span class="text-[10px] uppercase tracking-wider text-indigo-400 font-bold leading-none mb-1">Mode Scanner</span>
+                        <div class="flex items-center gap-2 text-sm font-bold">
+                            <svg class="w-4 h-4 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm14 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
+                            Atau Scan Resi
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </form>
@@ -84,10 +117,42 @@
     <script>
         let barcodeBuffer = '';
         let barcodeTimer = null;
-        // Ambil nomor resi dari database sebagai kunci validasi
         const expectedResi = "{{ $shipment->shipment_no }}";
+        const expectedSuffix = "{{ $expectedSuffix }}";
+
+        const manualInput = document.getElementById('manual-suffix-input');
+        const checkIcon = document.getElementById('check-icon');
+
+        if (manualInput) {
+            manualInput.addEventListener('input', function() {
+                if (this.value === expectedSuffix) {
+                    checkIcon.classList.remove('opacity-0');
+                    checkIcon.classList.add('opacity-100');
+                } else {
+                    checkIcon.classList.add('opacity-0');
+                    checkIcon.classList.remove('opacity-100');
+                }
+            });
+        }
 
         document.addEventListener('keydown', function(e) {
+            // Jika fokus di manual input
+            if (e.target.id === 'manual-suffix-input') {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (e.target.value === expectedSuffix) {
+                        if (confirm('Konfirmasi penerimaan barang?')) {
+                            document.getElementById('receipt-form').submit();
+                        }
+                    } else {
+                        alert('GAGAL! Nomor akhiran (' + e.target.value + ') tidak cocok. \nSeharusnya: ' + expectedSuffix);
+                        e.target.value = '';
+                        checkIcon.classList.add('opacity-0');
+                    }
+                }
+                return;
+            }
+
             // Jika user menekan tombol Enter saat sedang mengubah Qty, 
             // cegah form tersubmit agar tidak terkonfirmasi tanpa sengaja.
             if (e.target.tagName === 'INPUT' && e.key === 'Enter') {

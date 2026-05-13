@@ -55,7 +55,7 @@ td { padding: 5px 8px; border-bottom: 1px solid #f3f4f6; }
     </thead>
     <tbody>
         @foreach($sales as $i => $sale)
-        <tr>
+        <tr style="background:#fcfcfc">
             <td style="color:#999">{{ $i+1 }}</td>
             <td style="font-family:monospace;font-weight:bold;color:#3730a3">{{ $sale->sale_no }}</td>
             <td>{{ $sale->store->name }}</td>
@@ -66,6 +66,33 @@ td { padding: 5px 8px; border-bottom: 1px solid #f3f4f6; }
             <td class="text-right" style="color:#dc2626">{{ $sale->discount_amount > 0 ? number_format($sale->discount_amount, 0, ',', '.') : '-' }}</td>
             <td class="text-right" style="font-weight:bold">{{ number_format($sale->total_amount, 0, ',', '.') }}</td>
             <td>{{ $sale->created_at->format('d/m/Y H:i') }}</td>
+        </tr>
+        <tr>
+            <td></td>
+            <td colspan="9" style="padding: 0 8px 10px 8px; border-bottom: 2px solid #f3f4f6;">
+                <table style="width:100%; border:none; background: #fff; border-left: 2px solid #e0e7ff;">
+                    <thead>
+                        <tr style="border-bottom: 1px solid #eee">
+                            <th style="background:transparent; color:#666; font-size:7px; padding:2px 4px; width:40%">Produk</th>
+                            <th style="background:transparent; color:#666; font-size:7px; padding:2px 4px; width:30%">SKU / Variant</th>
+                            <th style="background:transparent; color:#666; font-size:7px; padding:2px 4px; text-align:center">Qty</th>
+                            <th style="background:transparent; color:#666; font-size:7px; padding:2px 4px; text-align:right">Harga</th>
+                            <th style="background:transparent; color:#666; font-size:7px; padding:2px 4px; text-align:right">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($sale->items as $item)
+                        <tr>
+                            <td style="padding:2px 4px; border:none; font-size:8px">{{ $item->variant->product->name }}</td>
+                            <td style="padding:2px 4px; border:none; font-size:7px; color:#666">{{ $item->variant->sku }} ({{ $item->variant->color->name }} / {{ $item->variant->size->name }})</td>
+                            <td style="padding:2px 4px; border:none; font-size:8px; text-align:center">{{ $item->qty }}</td>
+                            <td style="padding:2px 4px; border:none; font-size:8px; text-align:right">{{ number_format($item->unit_price, 0, ',', '.') }}</td>
+                            <td style="padding:2px 4px; border:none; font-size:8px; text-align:right; font-weight:bold">{{ number_format($item->subtotal, 0, ',', '.') }}</td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </td>
         </tr>
         @endforeach
     </tbody>

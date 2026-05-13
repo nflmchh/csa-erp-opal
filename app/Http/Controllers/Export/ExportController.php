@@ -20,7 +20,7 @@ class ExportController extends Controller
     {
         $this->authorize('export report');
 
-        $sales = Sale::with(['store', 'paymentMethod', 'items.variant.product'])
+        $sales = Sale::with(['store', 'paymentMethod', 'items.variant.product', 'items.variant.color', 'items.variant.size'])
             ->when($request->store_id,  fn($q) => $q->where('store_id', $request->store_id))
             ->when($request->date_from, fn($q) => $q->whereDate('created_at', '>=', $request->date_from))
             ->when($request->date_to,   fn($q) => $q->whereDate('created_at', '<=', $request->date_to))
@@ -52,7 +52,7 @@ class ExportController extends Controller
     {
         $this->authorize('export report');
 
-        $sales = Sale::with(['store', 'paymentMethod', 'items', 'creator'])
+        $sales = Sale::with(['store', 'paymentMethod', 'items.variant.product', 'creator'])
             ->when($request->store_id,  fn($q) => $q->where('store_id', $request->store_id))
             ->when($request->date_from, fn($q) => $q->whereDate('created_at', '>=', $request->date_from))
             ->when($request->date_to,   fn($q) => $q->whereDate('created_at', '<=', $request->date_to))
@@ -64,13 +64,34 @@ class ExportController extends Controller
 
         $callback = function () use ($sales) {
             $handle = fopen('php://output', 'w');
-            fputcsv($handle, ['No. Penjualan', 'Toko', 'Metode Bayar', 'Kasir', 'Items', 'Subtotal', 'Diskon', 'Total', 'Bayar', 'Kembalian', 'Tanggal']);
+            fputcsv($handle, ['No. Penjualan', 'Toko', 'Metode Bayar', 'Kasir', 'Total Transaksi', 'Tanggal', 'Item', 'SKU/Variant', 'Qty', 'Harga Satuan', 'Subtotal Item']);
             foreach ($sales as $s) {
-                fputcsv($handle, [
-                    $s->sale_no, $s->store->name, $s->paymentMethod?->name ?? '-', $s->creator?->name ?? '-',
-                    $s->items->sum('qty'), $s->subtotal, $s->discount_amount, $s->total_amount,
-                    $s->amount_paid, $s->change_amount, $s->created_at->format('d/m/Y H:i'),
-                ]);
+                foreach ($s->items as $idx => $item) {
+                    if ($idx === 0) {
+                        fputcsv($handle, [
+                            $s->sale_no, 
+                            $s->store->name, 
+                            $s->paymentMethod?->name ?? '-', 
+                            $s->creator?->name ?? '-',
+                            $s->total_amount, 
+                            $s->created_at->format('d/m/Y H:i'),
+                            $item->variant->product->name,
+                            $item->variant->sku,
+                            $item->qty,
+                            $item->unit_price,
+                            $item->subtotal
+                        ]);
+                    } else {
+                        fputcsv($handle, [
+                            '', '', '', '', '', '',
+                            $item->variant->product->name,
+                            $item->variant->sku,
+                            $item->qty,
+                            $item->unit_price,
+                            $item->subtotal
+                        ]);
+                    }
+                }
             }
             fclose($handle);
         };
