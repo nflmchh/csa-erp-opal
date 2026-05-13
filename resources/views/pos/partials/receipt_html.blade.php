@@ -106,6 +106,6 @@
 
         <div class="thanks">TERIMA KASIH TELAH BERBELANJA</div>
         <div class="center" style="font-size:10px; margin-top: 4px;">Silahkan bawa struk ini untuk retur barang</div>
-        <div style="height: 2.5cm;"></div>
+        <div style="height: 2.5cm;" class="hide-in-preview"></div>
     </div>
 </div>

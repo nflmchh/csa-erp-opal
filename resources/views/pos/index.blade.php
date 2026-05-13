@@ -283,7 +283,7 @@
                     <!-- Decorative background elements -->
                     <div class="absolute inset-0 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] opacity-50"></div>
                     
-                    <div id="print-area" x-html="receiptHtmlHtml" class="bg-white shadow-xl p-0 relative z-10 transform origin-top hover:scale-[1.02] transition-transform duration-300 min-w-[72mm] flex-shrink-0" style="min-height: 100px;"></div>
+                    <div id="print-area" x-html="receiptHtmlHtml" class="bg-white shadow-xl p-0 relative z-10 transition-transform duration-300 min-w-[72mm] flex-shrink-0" style="zoom: 0.85; min-height: 100px;"></div>
                 </div>
 
                 <!-- Area Aksi / Tombol -->
