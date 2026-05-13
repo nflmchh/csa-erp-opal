@@ -191,7 +191,10 @@ class ReportController extends Controller
      */
     public function saleDetail(Sale $sale)
     {
-        $this->authorize('view report');
+        // Bisa diakses oleh siapa saja yang punya 'view report' atau 'view pos'
+        if (! (auth()->user()->can('view report') || auth()->user()->can('view pos'))) {
+            abort(403);
+        }
 
         $sale->load([
             'store',
@@ -202,9 +205,12 @@ class ReportController extends Controller
             'items.variant.size',
         ]);
 
+        $receiptHtml = view('pos.partials.receipt_html', compact('sale'))->render();
+
         return response()->json([
             'success' => true,
             'sale'    => $sale,
+            'html'    => $receiptHtml,
         ]);
     }
 

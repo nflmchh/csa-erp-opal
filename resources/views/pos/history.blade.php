@@ -170,9 +170,13 @@ function posHistoryApp() {
 
         async openReceipt(saleId) {
             try {
-                let res = await fetch(`/pos/sale/${saleId}/receipt`, {
-                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                let res = await fetch(`/reports/sales/${saleId}/detail`, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
                 });
+                if (!res.ok) {
+                    alert('Gagal mengambil data struk (status: ' + res.status + ').');
+                    return;
+                }
                 let data = await res.json();
                 if (data.success) {
                     this.receiptHtmlHtml = data.html;
@@ -182,7 +186,7 @@ function posHistoryApp() {
                     alert('Gagal mengambil data struk.');
                 }
             } catch (err) {
-                alert('Terjadi kesalahan jaringan.');
+                alert('Terjadi kesalahan jaringan: ' + err.message);
             }
         },
 
