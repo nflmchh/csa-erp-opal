@@ -77,7 +77,7 @@ class ProductController extends Controller
             'sell_price'      => 'required|numeric|min:0',
             'is_active'       => 'boolean',
             'images'          => 'nullable|array',
-            'images.*'        => 'image|max:2048',
+            'images.*'        => 'image|max:10240',
             'primary_image'   => 'nullable|integer',
             'color_id_primary'=> 'nullable|exists:colors,id',
         ]);
@@ -171,7 +171,7 @@ class ProductController extends Controller
             'base_price'      => 'required|numeric|min:0',
             'sell_price'      => 'required|numeric|min:0',
             'images'          => 'nullable|array',
-            'images.*'        => 'image|max:2048',
+            'images.*'        => 'image|max:10240',
             'primary_image'   => 'nullable|integer',
             'delete_images'   => 'nullable|array',
             'delete_images.*' => 'integer',

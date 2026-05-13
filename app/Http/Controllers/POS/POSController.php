@@ -38,10 +38,12 @@ class POSController extends Controller
             ->whereHas('product', fn($q) => $q->where('is_active', true))
             ->get()
             ->map(function ($v) use ($store) {
-                $stock = \App\Models\Stock::where('product_variant_id', $v->id)
+                $stockRecord = \App\Models\Stock::where('product_variant_id', $v->id)
                     ->where('location_type', 'store')
                     ->where('location_id', $store->id)
-                    ->value('qty') ?? 0;
+                    ->first();
+                
+                $stock = $stockRecord ? $stockRecord->qty : 0;
 
                 // AMBIL DATA GAMBAR (Gambar utama atau gambar pertama)
                 $image = $v->product->images->where('is_primary', true)->first() ?? $v->product->images->first();
@@ -297,10 +299,12 @@ class POSController extends Controller
             ->limit(12)
             ->get()
             ->map(function ($v) use ($storeId) {
-                $stock = Stock::where('product_variant_id', $v->id)
+                $stockRecord = Stock::where('product_variant_id', $v->id)
                     ->where('location_type', 'store')
                     ->where('location_id', $storeId)
-                    ->value('qty') ?? 0;
+                    ->first();
+                
+                $stock = $stockRecord ? $stockRecord->qty : 0;
 
                 return [
                     'id' => $v->id,

@@ -189,7 +189,7 @@ function sessionApp() {
                                 {{ \Carbon\Carbon::parse($h->opened_at)->format('d/m/Y H:i') }} &rarr; 
                                 {{ $h->closed_at ? \Carbon\Carbon::parse($h->closed_at)->format('H:i') : 'Belum Ditutup' }}
                             </p>
-                            <p class="text-xs text-gray-500 mt-1">oleh <span class="font-semibold">{{ $h->user->name }}</span></p>
+                            <p class="text-xs text-gray-500 mt-1">oleh <span class="font-semibold">{{ $h->user?->name ?? 'User dihapus' }}</span></p>
                         </div>
                         <div class="text-right">
                             @php

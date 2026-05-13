@@ -79,7 +79,7 @@ class CashSessionController extends Controller
         $session->load('sales.paymentMethod');
         $totalSales    = $session->totalSales();
         $cashSalesTotal = $session->sales
-            ->where('paymentMethod.type', 'cash')
+            ->filter(fn($s) => optional($s->paymentMethod)->type === 'cash')
             ->sum('total_amount');
         $expectedAmount = (float) $session->opening_amount + $cashSalesTotal;
 
