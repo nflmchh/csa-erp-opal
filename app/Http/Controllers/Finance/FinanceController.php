@@ -15,11 +15,11 @@ class FinanceController extends Controller
     {
         $this->authorize('view finance');
 
-        $today     = now()->toDateString();
+        $today = now()->toDateString();
         $thisMonth = now()->format('Y-m');
 
-        $todaySales  = Sale::whereDate('created_at', $today)->sum('total_amount');
-        $monthSales  = Sale::whereRaw("DATE_FORMAT(created_at, '%Y-%m') = ?", [$thisMonth])->sum('total_amount');
+        $todaySales = Sale::whereDate('created_at', $today)->sum('total_amount');
+        $monthSales = Sale::whereRaw("DATE_FORMAT(created_at, '%Y-%m') = ?", [$thisMonth])->sum('total_amount');
         $totalOrders = Sale::whereDate('created_at', $today)->count();
 
         $storeStockValue = Stock::where('location_type', 'store')
@@ -43,7 +43,7 @@ class FinanceController extends Controller
         $stores = Store::orderBy('name')->get();
 
         $locationType = $r->location_type ?? 'store';
-        $locationId   = $r->location_id;
+        $locationId = $r->location_id;
 
         $stocks = Stock::where('stocks.location_type', $locationType)
             ->when($locationId, fn($q) => $q->where('stocks.location_id', $locationId))
@@ -53,10 +53,15 @@ class FinanceController extends Controller
             ->join('colors', 'product_variants.color_id', '=', 'colors.id')
             ->join('sizes', 'product_variants.size_id', '=', 'sizes.id')
             ->select(
-                'stocks.id', 'stocks.qty', 'stocks.location_id',
-                'product_variants.sku', 'product_variants.price_adjustment',
-                'products.name as product_name', 'products.sell_price',
-                'colors.name as color_name', 'sizes.name as size_name',
+                'stocks.id',
+                'stocks.qty',
+                'stocks.location_id',
+                'product_variants.sku',
+                'product_variants.price_adjustment',
+                'products.name as product_name',
+                'products.sell_price',
+                'colors.name as color_name',
+                'sizes.name as size_name',
                 DB::raw('stocks.qty * (products.sell_price + product_variants.price_adjustment) as total_value')
             )
             ->orderByDesc('total_value')
@@ -76,13 +81,13 @@ class FinanceController extends Controller
     {
         $this->authorize('view finance');
 
-        $month = $r->get('month', now()->format('m'));
-        $year  = $r->get('year', now()->format('Y'));
-        
+        $month = $r->input('month', now()->format('m'));
+        $year = $r->input('year', now()->format('Y'));
+
         $stores = Store::orderBy('name')->get();
 
         $storeRewards = [];
-        
+
         foreach ($stores as $store) {
             // Hitung total quantity dan total reward_store untuk bulan & tahun yang dipilih
             $salesData = \App\Models\SaleItem::join('sales', 'sale_items.sale_id', '=', 'sales.id')
@@ -95,7 +100,7 @@ class FinanceController extends Controller
             $totalQty = $salesData->total_qty ?? 0;
             $regularReward = $salesData->total_reward ?? 0;
             $target = $store->getTargetForMonth((int) $month, (int) $year);
-            
+
             $excess = 0;
             $bonus = 0;
 
@@ -119,6 +124,12 @@ class FinanceController extends Controller
         return view('finance.rewards', compact('storeRewards', 'month', 'year'));
     }
 
-    public function sales(Request $r) { return redirect()->route('reports.sales'); }
-    public function export()          { return back()->with('warning', 'Export belum tersedia.'); }
+    public function sales(Request $r)
+    {
+        return redirect()->route('reports.sales');
+    }
+    public function export()
+    {
+        return back()->with('warning', 'Export belum tersedia.');
+    }
 }

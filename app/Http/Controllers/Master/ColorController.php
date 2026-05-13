@@ -30,7 +30,7 @@ class ColorController extends Controller
         $this->authorize('create master');
         $validated = $request->validate([
             'name'     => ['required', 'string', 'max:50'],
-            'code'     => ['required', 'string', 'max:10', 'unique:colors,code'],
+            'code'     => ['required', 'string', 'max:10', \Illuminate\Validation\Rule::unique('colors')->whereNull('deleted_at')],
             'hex_code' => ['nullable', 'string', 'max:7', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'is_active'=> ['boolean'],
         ]);

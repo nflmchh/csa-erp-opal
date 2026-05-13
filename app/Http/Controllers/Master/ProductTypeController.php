@@ -42,7 +42,7 @@ class ProductTypeController extends Controller
 
         $validated = $request->validate([
             'name'        => ['required', 'string', 'max:100'],
-            'code'        => ['required', 'string', 'max:10', 'unique:product_types,code'],
+            'code'        => ['required', 'string', 'max:10', \Illuminate\Validation\Rule::unique('product_types')->whereNull('deleted_at')],
             'category_id' => ['nullable', 'exists:categories,id'],
             'sort_order'  => ['integer', 'min:0'],
             'is_active'   => ['boolean'],

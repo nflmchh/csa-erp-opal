@@ -24,7 +24,7 @@
                 <div class="flex items-start justify-between gap-4">
                     <div>
                         <div class="flex items-center gap-2 mb-1">
-                            <span class="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">{{ $product->brand->code }}</span>
+                            <span class="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">{{ $product->brand?->code ?? '?' }}</span>
                             <span class="text-xs text-gray-400 font-mono">{{ $product->model_code }}</span>
                             @if($product->is_active)
                             <span class="text-xs text-green-700 bg-green-50 px-2 py-0.5 rounded-full">Aktif</span>
@@ -33,7 +33,7 @@
                             @endif
                         </div>
                         <h1 class="text-xl font-bold text-gray-900">{{ $product->name }}</h1>
-                        <p class="text-sm text-gray-500 mt-0.5">{{ $product->category->name }} · {{ $product->productType->name }}</p>
+                        <p class="text-sm text-gray-500 mt-0.5">{{ $product->category?->name ?? '(Kategori dihapus)' }} · {{ $product->productType?->name ?? '(Tipe dihapus)' }}</p>
                     </div>
 
                     <div class="flex gap-2 shrink-0">

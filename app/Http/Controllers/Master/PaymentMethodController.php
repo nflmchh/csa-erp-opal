@@ -28,7 +28,7 @@ class PaymentMethodController extends Controller
         $this->authorize('create master');
         $validated = $request->validate([
             'name'       => ['required', 'string', 'max:100'],
-            'code'       => ['required', 'string', 'max:20', 'unique:payment_methods,code'],
+            'code'       => ['required', 'string', 'max:20', \Illuminate\Validation\Rule::unique('payment_methods')->whereNull('deleted_at')],
             'type'       => ['required', Rule::in(['cash', 'transfer', 'qris', 'card', 'other'])],
             'sort_order' => ['integer', 'min:0'],
             'is_active'  => ['boolean'],

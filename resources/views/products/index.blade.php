@@ -52,6 +52,13 @@
             <a href="{{ route('products.index') }}" class="bg-gray-100 text-gray-600 text-sm px-4 py-2 rounded-lg">Reset</a>
         </form>
 
+        @can('create local stock entry')
+        <a href="{{ route('products.stock-entry.create') }}"
+            class="bg-emerald-600 hover:bg-emerald-700 text-white text-sm px-4 py-2 rounded-lg font-medium whitespace-nowrap">
+            + Tambah Barang Toko
+        </a>
+        @endcan
+
         @can('create product')
         <a href="{{ route('products.create') }}"
             class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm px-4 py-2 rounded-lg font-medium whitespace-nowrap">

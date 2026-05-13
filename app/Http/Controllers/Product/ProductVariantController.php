@@ -28,55 +28,57 @@ class ProductVariantController extends Controller
     {
         $this->authorize('update product');
 
-        $data = $request->validate([
-            'variants'                    => 'required|array|min:1',
-            'variants.*.color_id'         => 'required|exists:colors,id',
-            'variants.*.size_id'          => 'required|exists:sizes,id',
-            'variants.*.price_adjustment' => 'nullable|numeric',
-            'variants.*.is_active'        => 'nullable|boolean',
+        $request->validate([
+            'color_ids' => 'required|array|min:1',
+            'color_ids.*' => 'exists:colors,id',
+            'size_ids' => 'required|array|min:1',
+            'size_ids.*' => 'exists:sizes,id',
         ]);
+
+        $colorIds = $request->input('color_ids');
+        $sizeIds  = $request->input('size_ids');
 
         $created = 0;
         $skipped = 0;
         $brand   = $product->brand;
 
-        foreach ($data['variants'] as $row) {
-            $colorId = $row['color_id'];
-            $sizeId  = $row['size_id'];
-
-            $exists = ProductVariant::withTrashed()
-                ->where('product_id', $product->id)
-                ->where('color_id', $colorId)
-                ->where('size_id', $sizeId)
-                ->exists();
-
-            if ($exists) {
-                $skipped++;
-                continue;
-            }
-
+        foreach ($colorIds as $colorId) {
             $color = Color::find($colorId);
-            $size  = Size::find($sizeId);
-            $sku   = SkuGeneratorService::generate($brand, $product->model_code, $color, $size);
+            
+            foreach ($sizeIds as $sizeId) {
+                $exists = ProductVariant::withTrashed()
+                    ->where('product_id', $product->id)
+                    ->where('color_id', $colorId)
+                    ->where('size_id', $sizeId)
+                    ->exists();
 
-            $variant = ProductVariant::create([
-                'product_id'       => $product->id,
-                'color_id'         => $colorId,
-                'size_id'          => $sizeId,
-                'sku'              => $sku,
-                'price_adjustment' => $row['price_adjustment'] ?? 0,
-                'is_active'        => isset($row['is_active']) ? (bool) $row['is_active'] : true,
-            ]);
+                if ($exists) {
+                    $skipped++;
+                    continue;
+                }
 
-            AuditLogService::log('create', 'products', "Varian {$sku} ditambahkan ke produk '{$product->name}'",
-                null, $variant->toArray(), ProductVariant::class, $variant->id);
+                $size  = Size::find($sizeId);
+                $sku   = SkuGeneratorService::generate($brand, $product->model_code, $color, $size);
 
-            $created++;
+                $variant = ProductVariant::create([
+                    'product_id'       => $product->id,
+                    'color_id'         => $colorId,
+                    'size_id'          => $sizeId,
+                    'sku'              => $sku,
+                    'price_adjustment' => 0,
+                    'is_active'        => true,
+                ]);
+
+                AuditLogService::log('create', 'products', "Varian {$sku} ditambahkan ke produk '{$product->name}'",
+                    null, $variant->toArray(), ProductVariant::class, $variant->id);
+
+                $created++;
+            }
         }
 
-        $msg = "{$created} varian berhasil ditambahkan.";
+        $msg = "{$created} varian baru berhasil ditambahkan.";
         if ($skipped > 0) {
-            $msg .= " {$skipped} kombinasi sudah ada, dilewati.";
+            $msg .= " {$skipped} kombinasi sudah ada/pernah dihapus, sehingga dilewati.";
         }
 
         return redirect()->route('products.show', $product)->with('success', $msg);

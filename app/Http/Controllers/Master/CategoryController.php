@@ -38,7 +38,7 @@ class CategoryController extends Controller
 
         $validated = $request->validate([
             'name'      => ['required', 'string', 'max:100'],
-            'code'      => ['required', 'string', 'max:10', 'unique:categories,code'],
+            'code'      => ['required', 'string', 'max:10', \Illuminate\Validation\Rule::unique('categories')->whereNull('deleted_at')],
             'parent_id' => ['nullable', 'exists:categories,id'],
             'sort_order'=> ['integer', 'min:0'],
             'is_active' => ['boolean'],

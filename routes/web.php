@@ -83,6 +83,11 @@ Route::middleware(['auth', 'active.user'])->group(function () {
         Route::get('/', [App\Http\Controllers\Product\ProductController::class, 'index'])->name('index');
         Route::get('/create', [App\Http\Controllers\Product\ProductController::class, 'create'])->name('create');
         Route::post('/', [App\Http\Controllers\Product\ProductController::class, 'store'])->name('store');
+        
+        // Local Stock Entry (Manual)
+        Route::get('/stock-entry', [App\Http\Controllers\Product\StockEntryController::class, 'create'])->name('stock-entry.create');
+        Route::post('/stock-entry', [App\Http\Controllers\Product\StockEntryController::class, 'store'])->name('stock-entry.store');
+        Route::get('/stock-entry/search', [App\Http\Controllers\Product\StockEntryController::class, 'searchVariants'])->name('stock-entry.search');
         Route::get('/{product}', [App\Http\Controllers\Product\ProductController::class, 'show'])->name('show');
         Route::get('/{product}/edit', [App\Http\Controllers\Product\ProductController::class, 'edit'])->name('edit');
         Route::put('/{product}', [App\Http\Controllers\Product\ProductController::class, 'update'])->name('update');

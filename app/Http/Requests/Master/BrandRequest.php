@@ -18,8 +18,10 @@ class BrandRequest extends FormRequest
 
         return [
             'name'        => ['required', 'string', 'max:100'],
-            'code'        => ['required', 'string', 'max:10', Rule::unique('brands', 'code')->ignore($brandId)->whereNull('deleted_at')],
-            'description' => ['nullable', 'string', 'max:500'],
+            'code' => [
+                'required', 'string', 'max:10',
+                \Illuminate\Validation\Rule::unique('brands')->whereNull('deleted_at')->ignore($this->brand)
+            ],'description' => ['nullable', 'string', 'max:500'],
             'logo'        => ['nullable', 'image', 'max:2048'],
             'is_active'   => ['boolean'],
         ];

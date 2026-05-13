@@ -67,8 +67,8 @@ class POSController extends Controller
         $user = Auth::user();
         $store = $user->primaryStore(); // Laporan dibatasi per toko kasir
 
-        $period = $r->get('period', 'today');
-        $format = $r->get('format', 'pdf');
+        $period = $r->input('period', 'today');
+        $format = $r->input('format', 'pdf');
 
         $query = \App\Models\Sale::with(['paymentMethod', 'items'])
             ->where('store_id', $store->id);

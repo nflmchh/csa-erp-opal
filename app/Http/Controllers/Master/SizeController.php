@@ -30,7 +30,7 @@ class SizeController extends Controller
         $this->authorize('create master');
         $validated = $request->validate([
             'name'       => ['required', 'string', 'max:10'],
-            'code'       => ['required', 'string', 'max:10', 'unique:sizes,code'],
+            'code'       => ['required', 'string', 'max:10', \Illuminate\Validation\Rule::unique('sizes')->whereNull('deleted_at')],
             'sort_order' => ['integer', 'min:0'],
             'is_active'  => ['boolean'],
         ]);

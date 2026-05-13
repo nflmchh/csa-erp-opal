@@ -30,7 +30,7 @@ class WarehouseController extends Controller
         $this->authorize('create master');
         $validated = $request->validate([
             'name'     => ['required', 'string', 'max:100'],
-            'code'     => ['required', 'string', 'max:20', 'unique:warehouses,code'],
+            'code'     => ['required', 'string', 'max:20', \Illuminate\Validation\Rule::unique('warehouses')->whereNull('deleted_at')],
             'address'  => ['nullable', 'string'],
             'city'     => ['nullable', 'string', 'max:100'],
             'phone'    => ['nullable', 'string', 'max:20'],

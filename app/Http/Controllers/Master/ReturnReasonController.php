@@ -28,7 +28,7 @@ class ReturnReasonController extends Controller
         $this->authorize('create master');
         $validated = $request->validate([
             'name'     => ['required', 'string', 'max:100'],
-            'code'     => ['required', 'string', 'max:20', 'unique:return_reasons,code'],
+            'code'     => ['required', 'string', 'max:20', \Illuminate\Validation\Rule::unique('return_reasons')->whereNull('deleted_at')],
             'type'     => ['required', Rule::in(['customer', 'store', 'both'])],
             'is_active'=> ['boolean'],
         ]);
