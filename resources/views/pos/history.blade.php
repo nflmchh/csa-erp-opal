@@ -179,8 +179,14 @@ function posHistoryApp() {
                 }
                 let data = await res.json();
                 if (data.success) {
-                    this.receiptHtmlHtml = data.html;
                     this.currentSaleData = data.sale;
+                    // Jika server berhasil render HTML (ada library QR/barcode), tampilkan
+                    // Jika tidak (hosting tanpa library), buat preview sederhana dari data
+                    if (data.html) {
+                        this.receiptHtmlHtml = data.html;
+                    } else {
+                        this.receiptHtmlHtml = this.buildSimpleReceiptHtml(data.sale);
+                    }
                     this.showReceiptModal = true;
                 } else {
                     alert('Gagal mengambil data struk.');
@@ -188,6 +194,41 @@ function posHistoryApp() {
             } catch (err) {
                 alert('Terjadi kesalahan jaringan: ' + err.message);
             }
+        },
+
+        buildSimpleReceiptHtml(sale) {
+            const fmt = (n) => parseInt(n || 0).toLocaleString('id-ID');
+            let rows = sale.items.map(item => {
+                const name = item.variant?.product?.name || '-';
+                const sku  = item.variant?.sku || '';
+                return `<div style="margin-bottom:6px">
+                    <div style="font-weight:bold">${name}</div>
+                    <div style="font-size:11px;color:#555">${sku}</div>
+                    <div style="display:flex;justify-content:space-between">
+                        <span>@ ${fmt(item.unit_price)} x${item.qty}</span>
+                        <span style="font-weight:bold">Rp ${fmt(item.subtotal)}</span>
+                    </div>
+                </div>`;
+            }).join('');
+            return `<div style="font-family:monospace;font-size:13px;width:72mm;margin:0 auto;padding:12px">
+                <div style="text-align:center;font-weight:bold;font-size:16px;margin-bottom:4px">SevenKey ERP</div>
+                <div style="text-align:center;font-weight:bold">${sale.store?.name || ''}</div>
+                <hr style="border-top:1px dashed #000;margin:8px 0">
+                <div style="display:flex;justify-content:space-between"><span>No.</span><span><b>${sale.sale_no}</b></span></div>
+                <div style="display:flex;justify-content:space-between"><span>Tgl</span><span>${(sale.created_at||'').substring(0,16).replace('T',' ')}</span></div>
+                <div style="display:flex;justify-content:space-between"><span>Kasir</span><span>${sale.creator?.name||'-'}</span></div>
+                <hr style="border-top:1px dashed #000;margin:8px 0">
+                ${rows}
+                <hr style="border-top:1px solid #000;margin:8px 0">
+                <div style="display:flex;justify-content:space-between"><span>Subtotal</span><span>Rp ${fmt(sale.subtotal)}</span></div>
+                ${sale.discount_amount > 0 ? `<div style="display:flex;justify-content:space-between"><span>Diskon</span><span>-Rp ${fmt(sale.discount_amount)}</span></div>` : ''}
+                <div style="display:flex;justify-content:space-between;font-weight:bold;font-size:15px;margin-top:6px"><span>TOTAL</span><span>Rp ${fmt(sale.total_amount)}</span></div>
+                <div style="display:flex;justify-content:space-between;margin-top:4px"><span>Bayar</span><span>Rp ${fmt(sale.amount_paid)}</span></div>
+                ${sale.change_amount > 0 ? `<div style="display:flex;justify-content:space-between;font-weight:bold"><span>Kembalian</span><span>Rp ${fmt(sale.change_amount)}</span></div>` : ''}
+                <hr style="border-top:1px dashed #000;margin:8px 0">
+                <div style="text-align:center;font-size:12px;font-weight:bold;margin-top:10px">TERIMA KASIH ATAS KUNJUNGAN ANDA</div>
+                <div style="height:2cm"></div>
+            </div>`;
         },
 
         async executePrint() {

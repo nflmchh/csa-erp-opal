@@ -205,7 +205,14 @@ class ReportController extends Controller
             'items.variant.size',
         ]);
 
-        $receiptHtml = view('pos.partials.receipt_html', compact('sale'))->render();
+        $receiptHtml = null;
+        try {
+            $receiptHtml = view('pos.partials.receipt_html', compact('sale'))->render();
+        } catch (\Throwable $e) {
+            // Library QR/barcode mungkin tidak tersedia di server hosting ini
+            // Fallback: kembalikan data saja tanpa HTML preview
+            \Illuminate\Support\Facades\Log::warning('receipt_html render failed: ' . $e->getMessage());
+        }
 
         return response()->json([
             'success' => true,
