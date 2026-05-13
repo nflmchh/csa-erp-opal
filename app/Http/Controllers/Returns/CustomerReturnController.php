@@ -46,12 +46,10 @@ class CustomerReturnController extends Controller
         $reasons = ReturnReason::where('is_active', true)
             ->whereIn('type', ['customer', 'both'])->get();
         $recentSales = Sale::where('store_id', $store?->id)
-            ->with('items.variant')
             ->orderBy('created_at', 'desc')
             ->limit(20)->get();
-        $variants = []; // No longer eager loading variants to prevent memory issues
 
-        return view('returns.customer.create', compact('store', 'reasons', 'recentSales', 'variants'));
+        return view('returns.customer.create', compact('store', 'reasons', 'recentSales'));
     }
 
     public function store(Request $r)
@@ -138,6 +136,10 @@ class CustomerReturnController extends Controller
         $user = Auth::user();
         $store = $user->primaryStore();
 
+        if (!$store) {
+            return response()->json(['error' => 'Akun Anda belum ditugaskan ke toko manapun.'], 403);
+        }
+
         $sale = Sale::where('sale_no', $saleNo)
             ->where('store_id', $store->id)
             ->with(['items.variant.product', 'items.variant.color', 'items.variant.size'])
@@ -150,19 +152,45 @@ class CustomerReturnController extends Controller
         $items = $sale->items->map(function ($item) {
             $v = $item->variant;
             return [
-                'id' => $v->id,
-                'sku' => $v->sku,
+                'id'    => $v->id,
+                'sku'   => $v->sku,
                 'label' => $v->product->name . ' · ' . $v->color->name . ' / ' . $v->size->name,
-                'price' => $item->unit_price, // Gunakan harga saat dijual, BUKAN harga saat ini
-                'qty' => $item->qty,
+                'price' => (float) $item->unit_price,
+                'qty'   => $item->qty,
             ];
         });
 
         return response()->json([
             'sale_id' => $sale->id,
             'sale_no' => $sale->sale_no,
-            'date' => $sale->created_at->format('d/m/Y H:i'),
-            'items' => $items
+            'date'    => $sale->created_at->format('d/m/Y H:i'),
+            'items'   => $items
         ]);
+    }
+
+    public function searchSales(Request $r)
+    {
+        $this->authorize('process customer return');
+        $user  = Auth::user();
+        $store = $user->primaryStore();
+
+        if (!$store) {
+            return response()->json([]);
+        }
+
+        $q = $r->input('q', '');
+
+        $sales = Sale::where('store_id', $store->id)
+            ->when($q, fn($query) => $query->where('sale_no', 'like', "%{$q}%"))
+            ->orderBy('created_at', 'desc')
+            ->limit(15)
+            ->get(['id', 'sale_no', 'created_at', 'total_amount']);
+
+        return response()->json($sales->map(fn($s) => [
+            'id'     => $s->id,
+            'sale_no'=> $s->sale_no,
+            'date'   => $s->created_at->format('d/m/Y H:i'),
+            'total'  => $s->total_amount,
+        ]));
     }
 }

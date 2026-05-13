@@ -150,6 +150,7 @@ Route::middleware(['auth', 'active.user'])->group(function () {
     Route::prefix('returns')->name('returns.')->group(function () {
         // Customer returns
         Route::get('/customer/search-sale', [App\Http\Controllers\Returns\CustomerReturnController::class, 'searchSale'])->name('customer.search-sale');
+        Route::get('/customer/search-sales', [App\Http\Controllers\Returns\CustomerReturnController::class, 'searchSales'])->name('customer.search-sales');
         Route::get('/customer', [App\Http\Controllers\Returns\CustomerReturnController::class, 'index'])->name('customer.index');
         Route::get('/customer/create', [App\Http\Controllers\Returns\CustomerReturnController::class, 'create'])->name('customer.create');
         Route::post('/customer', [App\Http\Controllers\Returns\CustomerReturnController::class, 'store'])->name('customer.store');

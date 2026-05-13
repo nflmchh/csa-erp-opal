@@ -17,7 +17,7 @@
                     <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm14 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
                     Scan Barcode Struk
                 </h2>
-                <p class="text-xs text-indigo-700 mt-1">Arahkan scanner ke barcode pada struk konsumen (otomatis memuat seluruh item yang dibeli).</p>
+                <p class="text-xs text-indigo-700 mt-1">Scan barcode struk atau ketik nomor struk di kolom kanan, tekan Enter untuk muat otomatis.</p>
             </div>
             <div class="w-full sm:w-64 relative">
                 <input type="text" x-model="scannedBarcode" @keydown.enter.prevent="fetchSaleByBarcode()" placeholder="Contoh: SAL-202605-0027"
@@ -38,20 +38,36 @@
                         {{ $store?->name ?? '—' }}
                     </p>
                 </div>
+
+                {{-- DROPDOWN STRUK: Searchable AJAX --}}
                 <div>
                     <label class="block text-xs font-medium text-gray-500 mb-1">Transaksi Penjualan (opsional)</label>
-                    <select name="sale_id" x-model="selectedSaleId" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                        <option value="">— Tanpa referensi —</option>
-                        <template x-if="scannedSale">
-                            <option :value="scannedSale.id" x-text="scannedSale.sale_no + ' — ' + scannedSale.date"></option>
-                        </template>
-                        @foreach($recentSales as $sale)
-                        <option value="{{ $sale->id }}" {{ old('sale_id') == $sale->id ? 'selected' : '' }}>
-                            {{ $sale->sale_no }} — {{ $sale->created_at->format('d/m/Y H:i') }}
-                        </option>
-                        @endforeach
-                    </select>
+                    <input type="hidden" name="sale_id" :value="selectedSaleId">
+
+                    <div class="relative" @click.outside="showSaleDrop = false">
+                        <input type="text"
+                            x-model="saleSearch"
+                            @input.debounce.300ms="doSaleSearch()"
+                            @focus="doSaleSearch()"
+                            placeholder="Ketik nomor struk untuk mencari…"
+                            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <div x-show="selectedSaleLabel" class="text-xs text-green-600 mt-1 px-1 font-medium" x-text="'✓ Terpilih: ' + selectedSaleLabel"></div>
+
+                        <div x-show="showSaleDrop && saleResults.length > 0" x-transition
+                            class="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-30 max-h-52 overflow-y-auto"
+                            style="display:none">
+                            <template x-for="s in saleResults" :key="s.id">
+                                <button type="button" @mousedown.prevent="pickSale(s)"
+                                    class="w-full text-left px-4 py-2.5 hover:bg-indigo-50 border-b border-gray-50 last:border-0">
+                                    <span class="font-mono text-xs text-indigo-700 font-semibold" x-text="s.sale_no"></span>
+                                    <span class="text-xs text-gray-400 ml-2" x-text="s.date"></span>
+                                    <span class="text-xs text-gray-500 ml-2" x-text="'Rp ' + Number(s.total).toLocaleString('id-ID')"></span>
+                                </button>
+                            </template>
+                        </div>
+                    </div>
                 </div>
+
                 <div>
                     <label class="block text-xs font-medium text-gray-500 mb-1">Alasan Retur <span class="text-red-500">*</span></label>
                     <select name="return_reason_id" required
@@ -146,7 +162,7 @@
                             </tr>
                         </template>
                         <tr x-show="rows.length === 0">
-                            <td colspan="6" class="px-4 py-8 text-center text-gray-400 text-sm">Belum ada item — cari produk di atas</td>
+                            <td colspan="6" class="px-4 py-8 text-center text-gray-400 text-sm">Belum ada item — scan struk atau cari produk di atas</td>
                         </tr>
                     </tbody>
                     <tfoot x-show="rows.length > 0" class="bg-gray-50 border-t border-gray-200">
@@ -186,43 +202,76 @@ function returnBuilder() {
         _key: 0,
 
         scannedBarcode: '',
-        scannedSale: null,
         selectedSaleId: '',
+        selectedSaleLabel: '',
 
-        async fetchSaleByBarcode() {
-            if(!this.scannedBarcode) return;
-            
+        // Sale dropdown (searchable)
+        saleSearch: '',
+        saleResults: [],
+        showSaleDrop: false,
+
+        async doSaleSearch() {
             try {
-                const res = await fetch(`/returns/customer/search-sale?sale_no=${encodeURIComponent(this.scannedBarcode)}`);
+                const res = await fetch(`/returns/customer/search-sales?q=${encodeURIComponent(this.saleSearch)}`, {
+                    headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+                });
+                if (res.ok) {
+                    this.saleResults = await res.json();
+                    this.showSaleDrop = this.saleResults.length > 0;
+                }
+            } catch (e) {
+                console.error('Gagal cari struk', e);
+            }
+        },
+
+        async pickSale(s) {
+            this.selectedSaleId    = s.id;
+            this.selectedSaleLabel = s.sale_no + ' — ' + s.date;
+            this.saleSearch        = s.sale_no;
+            this.showSaleDrop      = false;
+            // Auto-load items dari struk ini
+            await this.fetchSaleByBarcode(s.sale_no);
+        },
+
+        async fetchSaleByBarcode(overrideSaleNo = null) {
+            const saleNo = overrideSaleNo || this.scannedBarcode;
+            if (!saleNo) return;
+
+            try {
+                const res = await fetch(`/returns/customer/search-sale?sale_no=${encodeURIComponent(saleNo)}`, {
+                    headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+                });
                 const data = await res.json();
-                
-                if(!res.ok) {
+
+                if (!res.ok) {
                     alert(data.error || 'Transaksi tidak ditemukan.');
                     return;
                 }
 
-                // Sukses
-                this.scannedSale = data;
-                this.selectedSaleId = data.sale_id;
-                
-                // Tambahkan semua item ke dalam keranjang retur
-                this.rows = []; // Reset keranjang
+                // Update pilihan struk
+                this.selectedSaleId    = data.sale_id;
+                this.selectedSaleLabel = data.sale_no + ' — ' + data.date;
+                this.saleSearch        = data.sale_no;
+
+                // Muat semua item dari struk ke keranjang retur
+                this.rows = [];
                 data.items.forEach(item => {
                     this.rows.push({
-                        _key: this._key++,
-                        id: item.id,
-                        sku: item.sku,
-                        label: item.label,
-                        price: item.price,
-                        qty: item.qty,
+                        _key:      this._key++,
+                        id:        item.id,
+                        sku:       item.sku,
+                        label:     item.label,
+                        price:     item.price,
+                        qty:       item.qty,
                         condition: 'good'
                     });
                 });
-                
-                this.scannedBarcode = ''; // Kosongkan input setelah berhasil
-                
+
+                this.scannedBarcode = '';
+
             } catch (err) {
-                alert('Terjadi kesalahan jaringan.');
+                console.error(err);
+                alert('Terjadi kesalahan. Pastikan koneksi jaringan Anda stabil dan coba lagi.');
             }
         },
 
@@ -231,7 +280,6 @@ function returnBuilder() {
                 this.results = [];
                 return;
             }
-
             this.loading = true;
             try {
                 const response = await fetch(`/api/v1/variants/search?q=${encodeURIComponent(this.search)}`, {
@@ -251,7 +299,6 @@ function returnBuilder() {
         async scanProduct() {
             const q = this.search.trim();
             if (!q) return;
-
             this.loading = true;
             try {
                 const response = await fetch(`/api/v1/variants/search?q=${encodeURIComponent(q)}&exact=1`, {
