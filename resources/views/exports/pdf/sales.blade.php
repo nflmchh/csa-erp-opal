@@ -3,54 +3,61 @@
 <head>
 <meta charset="UTF-8">
 <style>
+@page {
+    margin-top: 1.5cm;
+    margin-right: 1.5cm;
+    margin-bottom: 2.5cm;
+    margin-left: 1.5cm;
+}
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { font-family: DejaVu Sans, sans-serif; font-size: 10px; color: #111; }
-.header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #3730a3; padding-bottom: 12px; margin-bottom: 16px; }
+.header-table { width: 100%; border-bottom: 2px solid #3730a3; margin-bottom: 16px; padding-bottom: 12px; }
+.header-table td { border: none; padding: 0; vertical-align: top; }
 .company { font-size: 16px; font-weight: bold; color: #3730a3; }
-.meta-row { display: flex; gap: 24px; margin-bottom: 12px; font-size: 9px; color: #555; }
-.meta-item strong { color: #111; font-size: 10px; }
-table { width: 100%; border-collapse: collapse; font-size: 9px; }
-th { background: #e0e7ff; padding: 6px 8px; text-align: left; font-size: 8px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #c7d2fe; }
-td { padding: 5px 8px; border-bottom: 1px solid #f3f4f6; }
+.main-table { width: 100%; border-collapse: collapse; font-size: 9px; table-layout: fixed; word-wrap: break-word; }
+.main-table th { background: #e0e7ff; padding: 6px 8px; text-align: left; font-size: 8px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #c7d2fe; }
+.main-table td { padding: 5px 8px; border-bottom: 1px solid #f3f4f6; }
 .text-right { text-align: right; }
-.summary { background: #f9fafb; border-top: 2px solid #3730a3; padding: 10px 8px; display: flex; justify-content: flex-end; gap: 32px; margin-top: 4px; }
-.summary-item label { font-size: 8px; text-transform: uppercase; color: #666; display: block; }
-.summary-item strong { font-size: 13px; color: #3730a3; }
+.summary-table { width: 100%; border-top: 2px solid #3730a3; margin-top: 4px; background: #f9fafb; }
+.summary-table td { padding: 10px 8px; border: none; text-align: right; font-size: 8px; color: #666; text-transform: uppercase; }
+.summary-table strong { font-size: 13px; color: #3730a3; display: block; }
 .footer { margin-top: 16px; font-size: 8px; color: #999; text-align: right; border-top: 1px solid #e5e7eb; padding-top: 8px; }
 </style>
 </head>
 <body>
 
-<div class="header">
-    <div>
-        <div class="company">SevenKey ERP</div>
-        <div style="color:#666;font-size:9px;margin-top:2px">Fashion Retail Management System</div>
-    </div>
-    <div style="text-align:right">
-        <div style="font-weight:bold;font-size:13px">LAPORAN PENJUALAN</div>
-        @if($store)
-        <div style="font-size:9px;color:#555">Toko: {{ $store->name }}</div>
-        @endif
-        @if($request->date_from || $request->date_to)
-        <div style="font-size:9px;color:#555">Periode: {{ $request->date_from ?? 'awal' }} s/d {{ $request->date_to ?? 'sekarang' }}</div>
-        @endif
-        <div style="font-size:8px;color:#999">Dicetak: {{ now()->format('d/m/Y H:i') }}</div>
-    </div>
-</div>
+<table class="header-table">
+    <tr>
+        <td>
+            <div class="company">SevenKey ERP</div>
+            <div style="color:#666;font-size:9px;margin-top:2px">Fashion Retail Management System</div>
+        </td>
+        <td style="text-align:right">
+            <div style="font-weight:bold;font-size:13px">LAPORAN PENJUALAN</div>
+            @if($store)
+            <div style="font-size:9px;color:#555">Toko: {{ $store->name }}</div>
+            @endif
+            @if($request->date_from || $request->date_to)
+            <div style="font-size:9px;color:#555">Periode: {{ $request->date_from ?? 'awal' }} s/d {{ $request->date_to ?? 'sekarang' }}</div>
+            @endif
+            <div style="font-size:8px;color:#999">Dicetak: {{ now()->format('d/m/Y H:i:s') }}</div>
+        </td>
+    </tr>
+</table>
 
-<table>
+<table class="main-table">
     <thead>
         <tr>
-            <th>#</th>
-            <th>No. Penjualan</th>
-            <th>Toko</th>
-            <th>Metode</th>
-            <th>Kasir</th>
-            <th class="text-right">Items</th>
-            <th class="text-right">Subtotal</th>
-            <th class="text-right">Diskon</th>
-            <th class="text-right">Total</th>
-            <th>Tanggal</th>
+            <th style="width: 3%">#</th>
+            <th style="width: 14%">No. Penjualan</th>
+            <th style="width: 13%">Toko</th>
+            <th style="width: 10%">Metode</th>
+            <th style="width: 10%">Kasir</th>
+            <th class="text-right" style="width: 6%">Items</th>
+            <th class="text-right" style="width: 11%">Subtotal</th>
+            <th class="text-right" style="width: 9%">Diskon</th>
+            <th class="text-right" style="width: 12%">Total</th>
+            <th style="width: 12%">Tanggal</th>
         </tr>
     </thead>
     <tbody>
@@ -98,17 +105,17 @@ td { padding: 5px 8px; border-bottom: 1px solid #f3f4f6; }
     </tbody>
 </table>
 
-<div class="summary">
-    <div class="summary-item">
-        <label>Total Transaksi</label>
-        <strong>{{ number_format($totalOrders) }}</strong>
-    </div>
-    <div class="summary-item">
-        <label>Total Pendapatan</label>
-        <strong>Rp {{ number_format($totalSales, 0, ',', '.') }}</strong>
-    </div>
-</div>
+<table class="summary-table">
+    <tr>
+        <td>
+            Total Transaksi<strong>{{ number_format($totalOrders) }}</strong>
+        </td>
+        <td style="width: 200px">
+            Total Pendapatan<strong>Rp {{ number_format($totalSales, 0, ',', '.') }}</strong>
+        </td>
+    </tr>
+</table>
 
-<div class="footer">SevenKey ERP — Laporan dibuat otomatis pada {{ now()->format('d F Y H:i:s') }}</div>
+<div class="footer">SevenKey ERP — Laporan dibuat otomatis pada {{ now()->format('d F Y, H:i:s') }}</div>
 </body>
 </html>

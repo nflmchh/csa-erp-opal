@@ -3,43 +3,52 @@
 <head>
 <meta charset="UTF-8">
 <style>
+@page {
+    margin-top: 1.5cm;
+    margin-right: 1.5cm;
+    margin-bottom: 2.5cm;
+    margin-left: 1.5cm;
+}
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { font-family: DejaVu Sans, sans-serif; font-size: 10px; color: #111; }
-.header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #16a34a; padding-bottom: 12px; margin-bottom: 16px; }
+.header-table { width: 100%; border-bottom: 2px solid #16a34a; margin-bottom: 16px; padding-bottom: 12px; }
+.header-table td { border: none; padding: 0; vertical-align: top; }
 .company { font-size: 16px; font-weight: bold; color: #16a34a; }
-table { width: 100%; border-collapse: collapse; font-size: 9px; }
-th { background: #dcfce7; padding: 6px 8px; text-align: left; font-size: 8px; text-transform: uppercase; border-bottom: 1px solid #bbf7d0; }
-td { padding: 5px 8px; border-bottom: 1px solid #f3f4f6; }
+.main-table { width: 100%; border-collapse: collapse; font-size: 9px; table-layout: fixed; word-wrap: break-word; }
+.main-table th { background: #dcfce7; padding: 6px 8px; text-align: left; font-size: 8px; text-transform: uppercase; border-bottom: 1px solid #bbf7d0; }
+.main-table td { padding: 5px 8px; border-bottom: 1px solid #f3f4f6; }
 .text-right { text-align: right; }
 .footer { margin-top: 16px; font-size: 8px; color: #999; text-align: right; border-top: 1px solid #e5e7eb; padding-top: 8px; }
 </style>
 </head>
 <body>
 
-<div class="header">
-    <div>
-        <div class="company">SevenKey ERP</div>
-        <div style="color:#666;font-size:9px;margin-top:2px">Fashion Retail Management System</div>
-    </div>
-    <div style="text-align:right">
-        <div style="font-weight:bold;font-size:13px">LAPORAN STOK</div>
-        <div style="font-size:9px;color:#555">
-            {{ $locationType === 'warehouse' ? 'Gudang' : 'Toko' }}{{ $location ? ': ' . $location->name : ' (Semua)' }}
-        </div>
-        <div style="font-size:8px;color:#999">Dicetak: {{ now()->format('d/m/Y H:i') }}</div>
-    </div>
-</div>
+<table class="header-table">
+    <tr>
+        <td>
+            <div class="company">SevenKey ERP</div>
+            <div style="color:#666;font-size:9px;margin-top:2px">Fashion Retail Management System</div>
+        </td>
+        <td style="text-align:right">
+            <div style="font-weight:bold;font-size:13px">LAPORAN STOK</div>
+            <div style="font-size:9px;color:#555">
+                {{ $locationType === 'warehouse' ? 'Gudang' : 'Toko' }}{{ $location ? ': ' . $location->name : ' (Semua)' }}
+            </div>
+            <div style="font-size:8px;color:#999">Dicetak: {{ now()->format('d/m/Y H:i:s') }}</div>
+        </td>
+    </tr>
+</table>
 
-<table>
+<table class="main-table">
     <thead>
         <tr>
-            <th>#</th>
-            <th>SKU</th>
-            <th>Produk</th>
-            <th>Brand</th>
-            <th>Warna</th>
-            <th>Ukuran</th>
-            <th class="text-right">Qty</th>
+            <th style="width: 5%">#</th>
+            <th style="width: 20%">SKU</th>
+            <th style="width: 30%">Produk</th>
+            <th style="width: 15%">Brand</th>
+            <th style="width: 10%">Warna</th>
+            <th style="width: 10%">Ukuran</th>
+            <th class="text-right" style="width: 10%">Qty</th>
         </tr>
     </thead>
     <tbody>
@@ -63,6 +72,6 @@ td { padding: 5px 8px; border-bottom: 1px solid #f3f4f6; }
     </tfoot>
 </table>
 
-<div class="footer">SevenKey ERP — Laporan dibuat otomatis pada {{ now()->format('d F Y H:i:s') }}</div>
+<div class="footer">SevenKey ERP — Laporan dibuat otomatis pada {{ now()->format('d F Y, H:i:s') }}</div>
 </body>
 </html>

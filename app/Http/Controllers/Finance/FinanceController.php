@@ -18,36 +18,142 @@ class FinanceController extends Controller
         $today = now()->toDateString();
         $thisMonth = now()->format('Y-m');
 
-        $todaySales = Sale::whereDate('created_at', $today)->sum('total_amount');
-        $monthSales = Sale::whereRaw("DATE_FORMAT(created_at, '%Y-%m') = ?", [$thisMonth])->sum('total_amount');
-        $totalOrders = Sale::whereDate('created_at', $today)->count();
+        $user = auth()->user();
+        $isGlobal = $user->hasGlobalFinanceAccess();
 
-        $storeStockValue = Stock::where('location_type', 'store')
+        $storeIds = [];
+        $warehouseIds = [];
+        if (!$isGlobal) {
+            $storeIds = $user->stores()->pluck('stores.id')->toArray();
+            $warehouseIds = $user->warehouses()->pluck('warehouses.id')->toArray();
+        }
+
+        $todaySalesQuery = Sale::whereDate('created_at', $today);
+        $monthSalesQuery = Sale::whereRaw("DATE_FORMAT(created_at, '%Y-%m') = ?", [$thisMonth]);
+        $totalOrdersQuery = Sale::whereDate('created_at', $today);
+
+        if (!$isGlobal) {
+            if (empty($storeIds)) {
+                $todaySalesQuery->whereRaw('1 = 0');
+                $monthSalesQuery->whereRaw('1 = 0');
+                $totalOrdersQuery->whereRaw('1 = 0');
+            } else {
+                $todaySalesQuery->whereIn('store_id', $storeIds);
+                $monthSalesQuery->whereIn('store_id', $storeIds);
+                $totalOrdersQuery->whereIn('store_id', $storeIds);
+            }
+        }
+
+        $todaySales = $todaySalesQuery->sum('total_amount');
+        $monthSales = $monthSalesQuery->sum('total_amount');
+        $totalOrders = $totalOrdersQuery->count();
+
+        $storeStockQuery = Stock::where('location_type', 'store')
             ->join('product_variants', 'stocks.product_variant_id', '=', 'product_variants.id')
-            ->join('products', 'product_variants.product_id', '=', 'products.id')
-            ->select(DB::raw('SUM(stocks.qty * (products.sell_price + product_variants.price_adjustment)) as value'))
+            ->join('products', 'product_variants.product_id', '=', 'products.id');
+
+        if (!$isGlobal) {
+            if (empty($storeIds)) {
+                $storeStockQuery->whereRaw('1 = 0');
+            } else {
+                $storeStockQuery->whereIn('stocks.location_id', $storeIds);
+            }
+        }
+
+        $storeStockValue = $storeStockQuery->select(DB::raw('SUM(stocks.qty * (products.sell_price + product_variants.price_adjustment)) as value'))
             ->value('value') ?? 0;
 
-        $warehouseStockValue = Stock::where('location_type', 'warehouse')
+        $warehouseStockQuery = Stock::where('location_type', 'warehouse')
             ->join('product_variants', 'stocks.product_variant_id', '=', 'product_variants.id')
-            ->join('products', 'product_variants.product_id', '=', 'products.id')
-            ->select(DB::raw('SUM(stocks.qty * (products.sell_price + product_variants.price_adjustment)) as value'))
+            ->join('products', 'product_variants.product_id', '=', 'products.id');
+
+        if (!$isGlobal) {
+            if (empty($warehouseIds)) {
+                $warehouseStockQuery->whereRaw('1 = 0');
+            } else {
+                $warehouseStockQuery->whereIn('stocks.location_id', $warehouseIds);
+            }
+        }
+
+        $warehouseStockValue = $warehouseStockQuery->select(DB::raw('SUM(stocks.qty * (products.sell_price + product_variants.price_adjustment)) as value'))
             ->value('value') ?? 0;
 
-        return view('finance.index', compact('todaySales', 'monthSales', 'totalOrders', 'storeStockValue', 'warehouseStockValue'));
+        return view('finance.index', compact('todaySales', 'monthSales', 'totalOrders', 'storeStockValue', 'warehouseStockValue', 'isGlobal', 'storeIds', 'warehouseIds'));
     }
 
     public function stockValue(Request $r)
     {
         $this->authorize('view finance');
-        $stores = Store::orderBy('name')->get();
+        $user = auth()->user();
+        $isGlobal = $user->hasGlobalFinanceAccess();
 
-        $locationType = $r->location_type ?? 'store';
+        $storeIds = [];
+        $warehouseIds = [];
+        if (!$isGlobal) {
+            $storeIds = $user->stores()->pluck('stores.id')->toArray();
+            $warehouseIds = $user->warehouses()->pluck('warehouses.id')->toArray();
+        }
+
+        $stores = $isGlobal ? Store::orderBy('name')->get() : $user->stores()->orderBy('name')->get();
+
+        $locationType = $r->location_type;
+        if (!$locationType) {
+            if (!$isGlobal && empty($storeIds) && !empty($warehouseIds)) {
+                $locationType = 'warehouse';
+            } else {
+                $locationType = 'store';
+            }
+        }
+        if (!$isGlobal) {
+            if ($locationType === 'store' && empty($storeIds)) {
+                $locationType = 'warehouse';
+            }
+            if ($locationType === 'warehouse' && empty($warehouseIds)) {
+                $locationType = 'store';
+            }
+        }
+
         $locationId = $r->location_id;
 
-        $stocks = Stock::where('stocks.location_type', $locationType)
-            ->when($locationId, fn($q) => $q->where('stocks.location_id', $locationId))
-            ->where('stocks.qty', '>', 0)
+        $stocksQuery = Stock::where('stocks.location_type', $locationType);
+        $totalQuery = Stock::where('stocks.location_type', $locationType);
+
+        if ($locationId) {
+            if (!$isGlobal) {
+                if ($locationType === 'store' && !in_array($locationId, $storeIds)) {
+                    $stocksQuery->whereRaw('1 = 0');
+                    $totalQuery->whereRaw('1 = 0');
+                }
+                if ($locationType === 'warehouse' && !in_array($locationId, $warehouseIds)) {
+                    $stocksQuery->whereRaw('1 = 0');
+                    $totalQuery->whereRaw('1 = 0');
+                }
+            }
+            $stocksQuery->where('stocks.location_id', $locationId);
+            $totalQuery->where('stocks.location_id', $locationId);
+        } else {
+            if (!$isGlobal) {
+                if ($locationType === 'store') {
+                    if (empty($storeIds)) {
+                        $stocksQuery->whereRaw('1 = 0');
+                        $totalQuery->whereRaw('1 = 0');
+                    } else {
+                        $stocksQuery->whereIn('stocks.location_id', $storeIds);
+                        $totalQuery->whereIn('stocks.location_id', $storeIds);
+                    }
+                } else if ($locationType === 'warehouse') {
+                    if (empty($warehouseIds)) {
+                        $stocksQuery->whereRaw('1 = 0');
+                        $totalQuery->whereRaw('1 = 0');
+                    } else {
+                        $stocksQuery->whereIn('stocks.location_id', $warehouseIds);
+                        $totalQuery->whereIn('stocks.location_id', $warehouseIds);
+                    }
+                }
+            }
+        }
+
+        $stocks = $stocksQuery->where('stocks.qty', '>', 0)
             ->join('product_variants', 'stocks.product_variant_id', '=', 'product_variants.id')
             ->join('products', 'product_variants.product_id', '=', 'products.id')
             ->join('colors', 'product_variants.color_id', '=', 'colors.id')
@@ -67,24 +173,25 @@ class FinanceController extends Controller
             ->orderByDesc('total_value')
             ->paginate(50)->withQueryString();
 
-        $grandTotal = Stock::where('stocks.location_type', $locationType)
-            ->when($locationId, fn($q) => $q->where('stocks.location_id', $locationId))
-            ->join('product_variants', 'stocks.product_variant_id', '=', 'product_variants.id')
+        $grandTotal = $totalQuery->join('product_variants', 'stocks.product_variant_id', '=', 'product_variants.id')
             ->join('products', 'product_variants.product_id', '=', 'products.id')
             ->select(DB::raw('SUM(stocks.qty * (products.sell_price + product_variants.price_adjustment)) as value'))
             ->value('value') ?? 0;
 
-        return view('finance.stock-value', compact('stocks', 'stores', 'locationType', 'locationId', 'grandTotal'));
+        return view('finance.stock-value', compact('stocks', 'stores', 'locationType', 'locationId', 'grandTotal', 'isGlobal', 'storeIds', 'warehouseIds'));
     }
 
     public function rewards(Request $r)
     {
         $this->authorize('view finance');
 
+        $user = auth()->user();
+        $isGlobal = $user->hasGlobalFinanceAccess();
+
         $month = $r->input('month', now()->format('m'));
         $year = $r->input('year', now()->format('Y'));
 
-        $stores = Store::orderBy('name')->get();
+        $stores = $isGlobal ? Store::orderBy('name')->get() : $user->stores()->orderBy('name')->get();
 
         $storeRewards = [];
 

@@ -7,6 +7,7 @@
 <div class="space-y-4">
 
     <form method="GET" class="bg-white rounded-xl border border-gray-200 p-4 flex flex-wrap gap-3 items-end">
+        @if($isGlobal || (!empty($storeIds) && !empty($warehouseIds)))
         <div>
             <label class="block text-xs font-medium text-gray-500 mb-1">Tipe Lokasi</label>
             <select name="location_type" onchange="this.form.submit()"
@@ -15,6 +16,9 @@
                 <option value="warehouse" {{ $locationType === 'warehouse' ? 'selected' : '' }}>Gudang</option>
             </select>
         </div>
+        @else
+            <input type="hidden" name="location_type" value="{{ $locationType }}">
+        @endif
         @if($locationType === 'store')
         <div>
             <label class="block text-xs font-medium text-gray-500 mb-1">Toko</label>

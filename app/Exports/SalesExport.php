@@ -22,12 +22,24 @@ class SalesExport implements FromCollection, WithHeadings, WithMapping, ShouldAu
 
     public function collection(): Collection
     {
-        $sales = Sale::with(['store', 'paymentMethod', 'items.variant.product', 'items.variant.color', 'items.variant.size', 'creator'])
+        $user = auth()->user();
+        $isGlobal = $user && ($user->hasRole('superadmin') || $user->hasRole('owner') || $user->hasRole('finance'));
+
+        $query = Sale::with(['store', 'paymentMethod', 'items.variant.product', 'items.variant.color', 'items.variant.size', 'creator'])
             ->when($this->storeId,  fn($q) => $q->where('store_id', $this->storeId))
             ->when($this->dateFrom, fn($q) => $q->whereDate('created_at', '>=', $this->dateFrom))
-            ->when($this->dateTo,   fn($q) => $q->whereDate('created_at', '<=', $this->dateTo))
-            ->orderBy('created_at', 'desc')
-            ->get();
+            ->when($this->dateTo,   fn($q) => $q->whereDate('created_at', '<=', $this->dateTo));
+
+        if (!$isGlobal && $user) {
+            $storeIds = $user->stores()->pluck('stores.id')->toArray();
+            if (empty($storeIds)) {
+                $query->whereRaw('1 = 0');
+            } else {
+                $query->whereIn('store_id', $storeIds);
+            }
+        }
+
+        $sales = $query->orderBy('created_at', 'desc')->get();
 
         $rows = [];
         foreach ($sales as $sale) {
