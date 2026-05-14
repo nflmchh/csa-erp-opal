@@ -104,6 +104,57 @@
             <h3 class="text-lg font-bold text-gray-800 border-l-4 border-indigo-500 pl-3">Ringkasan Finansial Eksekutif</h3>
         </div>
 
+        {{-- Daily Financial Cards --}}
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {{-- Card Pemasukan Hari Ini --}}
+            <a href="{{ route('finance.index') }}" class="bg-white rounded-xl p-5 border border-gray-200 shadow-sm hover:border-blue-400 transition-all hover:shadow-md group relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-16 h-16 bg-blue-50 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
+                <p class="text-xs font-bold text-blue-500 uppercase tracking-wider mb-1 relative z-10">Pemasukan Hari Ini</p>
+                <div class="flex items-center justify-between relative z-10">
+                    <h4 class="text-xl font-black text-gray-900">Rp {{ number_format($todaySales, 0, ',', '.') }}</h4>
+                    <div class="p-2 bg-blue-100 rounded-lg text-blue-600">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    </div>
+                </div>
+            </a>
+
+            {{-- Card Pengeluaran Hari Ini --}}
+            <a href="{{ route('finance.index') }}" class="bg-white rounded-xl p-5 border border-gray-200 shadow-sm hover:border-red-400 transition-all hover:shadow-md group relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-16 h-16 bg-red-50 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
+                <p class="text-xs font-bold text-red-500 uppercase tracking-wider mb-1 relative z-10">Pengeluaran Hari Ini</p>
+                <div class="flex items-center justify-between relative z-10">
+                    <h4 class="text-xl font-black text-gray-900">Rp {{ number_format($todayExpense, 0, ',', '.') }}</h4>
+                    <div class="p-2 bg-red-100 rounded-lg text-red-600">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" /></svg>
+                    </div>
+                </div>
+            </a>
+
+            {{-- Card Keuntungan Hari Ini --}}
+            <a href="{{ route('finance.index') }}" class="bg-white rounded-xl p-5 border border-gray-200 shadow-sm hover:border-emerald-400 transition-all hover:shadow-md group relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-16 h-16 bg-emerald-50 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
+                <p class="text-xs font-bold text-emerald-500 uppercase tracking-wider mb-1 relative z-10">Keuntungan Hari Ini</p>
+                <div class="flex items-center justify-between relative z-10">
+                    <h4 class="text-xl font-black text-gray-900">Rp {{ number_format($todayProfit, 0, ',', '.') }}</h4>
+                    <div class="p-2 bg-emerald-100 rounded-lg text-emerald-600">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
+                    </div>
+                </div>
+            </a>
+
+            {{-- Card Penjualan Hari Ini (Trx) --}}
+            <a href="{{ route('finance.index') }}" class="bg-white rounded-xl p-5 border border-gray-200 shadow-sm hover:border-amber-400 transition-all hover:shadow-md group relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-16 h-16 bg-amber-50 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
+                <p class="text-xs font-bold text-amber-500 uppercase tracking-wider mb-1 relative z-10">Penjualan Hari Ini</p>
+                <div class="flex items-center justify-between relative z-10">
+                    <h4 class="text-xl font-black text-gray-900">{{ number_format($todayOrders) }} Trx</h4>
+                    <div class="p-2 bg-amber-100 rounded-lg text-amber-600">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>
+                    </div>
+                </div>
+            </a>
+        </div>
+
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {{-- Interactive Donut Chart --}}
             <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 flex flex-col">

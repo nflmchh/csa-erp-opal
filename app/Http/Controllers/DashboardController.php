@@ -11,6 +11,7 @@ use App\Models\SaleItem;
 use App\Models\Stock;
 use App\Models\Store;
 use App\Models\Warehouse;
+use App\Models\Expense;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -234,6 +235,17 @@ class DashboardController extends Controller
         $rewardToko     = (clone $rewardQuery)->sum('reward_store');
         $rewardOwner    = (clone $rewardQuery)->sum('reward_owner');
 
+        // ── Additional Financial Calculations ────────────────
+        $totalExpense = Expense::when($storeId, fn($q) => $q->where('store_id', $storeId))
+            ->whereRaw("DATE_FORMAT(expense_date, '%Y-%m') = ?", [$thisMonth])
+            ->sum('amount');
+
+        $todayExpense = Expense::when($storeId, fn($q) => $q->where('store_id', $storeId))
+            ->whereDate('expense_date', $today)
+            ->sum('amount');
+
+        $todayProfit = $todaySales - $todayExpense;
+
         // Mengembalikan View aslinya (Super Admin Dashboard)
         return view('dashboard.index', compact(
             'stores', 'storeId', 'storeDateFilter', 'topDateFilter',
@@ -245,8 +257,8 @@ class DashboardController extends Controller
             'salesByStore', 'paymentDistribution',
             'storeStockValue', 'warehouseStockValue',
             'monthReturns', 'pendingReturns',
-            // PASTIKAN 3 VARIABEL INI DITAMBAHKAN KE DALAM COMPACT:
-            'totalItemsSold', 'rewardToko', 'rewardOwner'
+            // PASTIKAN VARIABEL INI DITAMBAHKAN KE DALAM COMPACT:
+            'totalItemsSold', 'rewardToko', 'rewardOwner', 'totalExpense', 'todayExpense', 'todayProfit'
         ));
     }
 }
