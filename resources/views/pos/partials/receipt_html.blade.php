@@ -1,5 +1,5 @@
 <style>
-    .receipt-wrapper { box-sizing: border-box; font-family: 'Courier New', monospace; font-size: 13px; color: #000; background: #fff; width: 72mm; margin: 0 auto; padding: 12px; }
+    .receipt-wrapper { box-sizing: border-box; font-family: 'Courier New', monospace; font-size: 13px; color: #000; background: #fff; width: 72mm; margin: 0 auto; padding: 12px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
     .receipt-wrapper .center { text-align: center; }
     .receipt-wrapper .bold { font-weight: bold; }
     .receipt-wrapper .divider { border-top: 1px dashed #000; margin: 10px 0; }
@@ -17,11 +17,45 @@
     
     @media screen {
         .hide-in-preview { display: none !important; }
+        .preview-container { 
+            max-height: 70vh; 
+            overflow-y: auto; 
+            background: #f3f4f6; 
+            padding: 20px 0;
+            border-radius: 8px;
+        }
+    }
+    
+    @media print {
+        .no-print, .hide-in-print { display: none !important; }
+        .preview-container { background: none !important; padding: 0 !important; overflow: visible !important; }
+        .receipt-wrapper { box-shadow: none !important; margin: 0 auto !important; padding: 4mm !important; width: 100% !important; }
     }
 </style>
 
-<div class="receipt-wrapper">
-    <div class="center bold" style="font-size:16px; margin-bottom: 4px; text-transform: uppercase;">{{ $sale->store->name }}</div>
+<div class="preview-container">
+    @if(auth()->check() && auth()->user()->hasRole('superadmin'))
+    <div class="no-print" style="margin: 0 auto 12px; width: 72mm; font-family: sans-serif;">
+        <div style="background: #4f46e5; color: white; padding: 8px 12px; border-radius: 10px; font-size: 10px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+            <span>PRINTER:</span>
+            <select onchange="localStorage.setItem('pos_print_method', this.value); window.location.reload();" 
+                    style="background: white; border: none; padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: bold; cursor: pointer; color: #4f46e5;">
+                <option value="pc_usb">USB (BROWSER)</option>
+                <option value="pc_bluetooth">BLUETOOTH</option>
+                <option value="android_flutter">ANDROID APP</option>
+            </select>
+        </div>
+        <script>
+            (function(){
+                const sel = document.currentScript.previousElementSibling.querySelector('select');
+                sel.value = localStorage.getItem('pos_print_method') || 'pc_usb';
+            })();
+        </script>
+    </div>
+    @endif
+    <div class="receipt-wrapper">
+    <div class="center bold" style="font-size:16px; margin-bottom: 2px; text-transform: uppercase;">{{ $sale->store->name }}</div>
+    <div class="center" style="font-size:9px; color:#666; margin-bottom: 4px;">SevenKey erp</div>
     @if($sale->store->address)
     <div class="center" style="font-size:11px;color:#444">{{ $sale->store->address }}</div>
     @endif
@@ -92,20 +126,26 @@
         @endif
 
         <!-- QR Code dan Barcode -->
-        <div style="text-align:center;padding:10px 0">
-            {!! \SimpleSoftwareIO\QrCode\Facades\QrCode::size(100)->margin(0)->generate($sale->sale_no) !!}
+        <div style="text-align:center;padding:5px 0">
+            {!! \SimpleSoftwareIO\QrCode\Facades\QrCode::size(80)->margin(0)->generate($sale->sale_no) !!}
         </div>
-        <div class="barcode-container">
+        <div class="barcode-container" style="margin: 5px 0;">
             @php
                 $generator = new \Picqer\Barcode\BarcodeGeneratorSVG();
-                $barcodeSvg = $generator->getBarcode($sale->sale_no, $generator::TYPE_CODE_128, 2, 50, 'black');
+                $barcodeSvg = $generator->getBarcode($sale->sale_no, $generator::TYPE_CODE_128, 2, 40, 'black');
             @endphp
             {!! $barcodeSvg !!}
-            <div class="barcode-text">{{ $sale->sale_no }}</div>
+            <div class="barcode-text" style="font-size: 10px;">{{ $sale->sale_no }}</div>
         </div>
+
+        @if($sale->store->phone)
+        <div class="center" style="font-size:11px; margin-top: 10px;">No Telp</div>
+        <div class="center" style="font-size:11px;">{{ $sale->store->phone }}</div>
+        @endif
 
         <div class="thanks">TERIMA KASIH TELAH BERBELANJA</div>
         <div class="center" style="font-size:10px; margin-top: 4px;">Silahkan bawa struk ini untuk retur barang</div>
         <div style="height: 2.5cm;" class="hide-in-preview"></div>
-    </div>
+        </div>
+</div>
 </div>
