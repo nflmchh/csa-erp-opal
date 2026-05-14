@@ -197,10 +197,13 @@ Route::middleware(['auth', 'active.user'])->group(function () {
         Route::get('/sales/{sale}/detail', [App\Http\Controllers\Report\ReportController::class, 'saleDetail'])->name('sale-detail');
         Route::get('/shipment', [App\Http\Controllers\Report\ReportController::class, 'shipment'])->name('shipment');
         Route::get('/transfer', [App\Http\Controllers\Report\ReportController::class, 'transfer'])->name('transfer');
+        Route::get('/rewards', [App\Http\Controllers\Report\ReportController::class, 'rewards'])->name('rewards');
+        Route::get('/inbound', [App\Http\Controllers\Report\ReportController::class, 'inbound'])->name('inbound');
         Route::get('/return', [App\Http\Controllers\Report\ReportController::class, 'return'])->name('return');
         Route::get('/export-pdf', [App\Http\Controllers\Report\ReportController::class, 'exportPdf'])->name('export-pdf');
         Route::get('/export-excel', [App\Http\Controllers\Report\ReportController::class, 'exportExcel'])->name('export-excel');
         Route::get('/expenses', [App\Http\Controllers\Report\ReportController::class, 'expenses'])->name('expenses');
+
     });
 
     // Exports (PDF / Excel / CSV)
@@ -219,6 +222,8 @@ Route::middleware(['auth', 'active.user'])->group(function () {
         Route::get('/transfer/excel',   [App\Http\Controllers\Export\ExportController::class, 'transferExcel'])->name('transfer.excel');
         Route::get('/rewards/pdf',      [App\Http\Controllers\Export\ExportController::class, 'rewardsPdf'])->name('rewards.pdf');
         Route::get('/rewards/excel',    [App\Http\Controllers\Export\ExportController::class, 'rewardsExcel'])->name('rewards.excel');
+        Route::get('/inbound/pdf',      [App\Http\Controllers\Export\ExportController::class, 'inboundPdf'])->name('inbound.pdf');
+        Route::get('/inbound/excel',    [App\Http\Controllers\Export\ExportController::class, 'inboundExcel'])->name('inbound.excel');
     });
 
     // Label / Tag Printer

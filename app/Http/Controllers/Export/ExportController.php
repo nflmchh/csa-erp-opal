@@ -10,6 +10,7 @@ use App\Exports\StockExport;
 use App\Exports\TransferExport;
 use App\Http\Controllers\Controller;
 use App\Models\Expense;
+use App\Models\Inbound;
 use App\Models\Sale;
 use App\Models\Shipment;
 use App\Models\SaleItem;
@@ -139,16 +140,48 @@ class ExportController extends Controller
     public function stockPdf(Request $request)
     {
         $this->authorize('export report');
+        $user = auth()->user();
 
-        $locationType = $request->location_type ?? 'warehouse';
-        $locationId   = $request->location_id;
+        // Ambil data lokasi yang diizinkan untuk user ini
+        if ($user->hasRole(['superadmin', 'owner', 'finance'])) {
+            $locationType = $request->location_type ?? 'warehouse';
+            $locationId   = $request->location_id;
+        } elseif ($user->hasRole('admin gudang')) {
+            $locationType = 'warehouse';
+            $warehouses   = $user->warehouses()->pluck('warehouses.id');
+            $locationId   = $request->location_id ?? $warehouses->first();
+            if ($request->location_id && !$warehouses->contains($request->location_id)) {
+                $locationId = $warehouses->first();
+            }
+        } elseif ($user->hasRole('kepala toko')) {
+            $locationType = 'store';
+            $stores       = $user->stores()->pluck('stores.id');
+            $locationId   = $request->location_id ?? $stores->first();
+            if ($request->location_id && !$stores->contains($request->location_id)) {
+                $locationId = $stores->first();
+            }
+        } else {
+            abort(403, 'Unauthorized location access.');
+        }
+
+        $searchProduct = $request->search_product;
+        $brandId       = $request->brand_id;
+        $colorId       = $request->color_id;
+        $sizeId        = $request->size_id;
 
         $stocks = Stock::with(['variant.product.brand', 'variant.color', 'variant.size'])
-            ->where('location_type', $locationType)
-            ->when($locationId, fn($q) => $q->where('location_id', $locationId))
-            ->where('qty', '>', 0)
-            ->orderByDesc('qty')
-            ->limit(500)
+            ->join('product_variants as pv', 'stocks.product_variant_id', '=', 'pv.id')
+            ->join('products as p', 'pv.product_id', '=', 'p.id')
+            ->where('stocks.location_type', $locationType)
+            ->when($locationId,    fn($q) => $q->where('stocks.location_id', $locationId))
+            ->when($searchProduct, fn($q) => $q->where('p.name', 'like', '%' . $searchProduct . '%'))
+            ->when($brandId,       fn($q) => $q->where('p.brand_id', $brandId))
+            ->when($colorId,       fn($q) => $q->where('pv.color_id', $colorId))
+            ->when($sizeId,        fn($q) => $q->where('pv.size_id', $sizeId))
+            ->where('stocks.qty', '>', 0)
+            ->select('stocks.*')
+            ->orderByDesc('stocks.qty')
+            ->limit(1000)
             ->get();
 
         $totalQty = $stocks->sum('qty');
@@ -156,8 +189,15 @@ class ExportController extends Controller
             ? ($locationType === 'warehouse' ? Warehouse::find($locationId) : Store::find($locationId))
             : null;
 
-        $pdf = Pdf::loadView('exports.pdf.stock', compact('stocks', 'totalQty', 'location', 'locationType'))
-            ->setPaper('a4', 'portrait');
+        // Label filter untuk ditampilkan di header PDF
+        $filterBrand = $brandId ? \App\Models\Brand::find($brandId)?->name : null;
+        $filterColor = $colorId ? \App\Models\Color::find($colorId)?->name : null;
+        $filterSize  = $sizeId  ? \App\Models\Size::find($sizeId)?->name   : null;
+
+        $pdf = Pdf::loadView('exports.pdf.stock', compact(
+            'stocks', 'totalQty', 'location', 'locationType',
+            'searchProduct', 'filterBrand', 'filterColor', 'filterSize'
+        ))->setPaper('a4', 'portrait');
 
         return $pdf->download('laporan-stok-' . now()->format('Ymd-His') . '.pdf');
     }
@@ -165,9 +205,33 @@ class ExportController extends Controller
     public function stockExcel(Request $request)
     {
         $this->authorize('export report');
+        $user = auth()->user();
+
+        // Logika role-based yang sama untuk Excel
+        if ($user->hasRole(['superadmin', 'owner', 'finance'])) {
+            $locationType = $request->location_type ?? 'warehouse';
+            $locationId   = $request->location_id;
+        } elseif ($user->hasRole('admin gudang')) {
+            $locationType = 'warehouse';
+            $warehouses   = $user->warehouses()->pluck('warehouses.id');
+            $locationId   = $request->location_id ?? $warehouses->first();
+        } elseif ($user->hasRole('kepala toko')) {
+            $locationType = 'store';
+            $stores       = $user->stores()->pluck('stores.id');
+            $locationId   = $request->location_id ?? $stores->first();
+        } else {
+            abort(403);
+        }
 
         return Excel::download(
-            new StockExport($request->location_type ?? 'warehouse', $request->location_id),
+            new StockExport(
+                $locationType,
+                $locationId ? (int) $locationId : null,
+                $request->search_product,
+                $request->brand_id ? (int) $request->brand_id : null,
+                $request->color_id ? (int) $request->color_id : null,
+                $request->size_id ? (int) $request->size_id : null,
+            ),
             'laporan-stok-' . now()->format('Ymd-His') . '.xlsx'
         );
     }
@@ -175,10 +239,25 @@ class ExportController extends Controller
     public function stockCsv(Request $request)
     {
         $this->authorize('export report');
+        $user = auth()->user();
+
+        // Logika role-based yang sama untuk CSV
+        if ($user->hasRole(['superadmin', 'owner', 'finance'])) {
+            $locationType = $request->location_type ?? 'warehouse';
+            $locationId   = $request->location_id;
+        } elseif ($user->hasRole('admin gudang')) {
+            $locationType = 'warehouse';
+            $locationId   = $request->location_id ?? $user->warehouses()->first()?->id;
+        } elseif ($user->hasRole('kepala toko')) {
+            $locationType = 'store';
+            $locationId   = $request->location_id ?? $user->stores()->first()?->id;
+        } else {
+            abort(403);
+        }
 
         $stocks = Stock::with(['variant.product.brand', 'variant.color', 'variant.size'])
-            ->where('location_type', $request->location_type ?? 'warehouse')
-            ->when($request->location_id, fn($q) => $q->where('location_id', $request->location_id))
+            ->where('location_type', $locationType)
+            ->when($locationId, fn($q) => $q->where('location_id', $locationId))
             ->where('qty', '>', 0)
             ->orderByDesc('qty')
             ->get();
@@ -290,19 +369,39 @@ class ExportController extends Controller
     public function shipmentPdf(Request $request)
     {
         $this->authorize('export report');
+        $user = auth()->user();
+
+        // Enforce role-based filtering
+        if ($user->hasRole(['superadmin', 'owner', 'finance'])) {
+            $warehouseId = $request->warehouse_id;
+            $storeId     = $request->store_id;
+        } elseif ($user->hasRole('admin gudang')) {
+            $warehouses  = $user->warehouses()->pluck('warehouses.id');
+            $warehouseId = $request->warehouse_id ?? $warehouses->first();
+            $storeId     = $request->store_id;
+        } elseif ($user->hasRole('kepala toko')) {
+            $warehouseId = $request->warehouse_id;
+            $stores      = $user->stores()->pluck('stores.id');
+            $storeId     = $request->store_id ?? $stores->first();
+            if ($request->store_id && !$stores->contains($request->store_id)) {
+                $storeId = $stores->first();
+            }
+        } else {
+            abort(403);
+        }
 
         $shipments = Shipment::with(['warehouse', 'store', 'items'])
-            ->when($request->warehouse_id, fn($q) => $q->where('warehouse_id', $request->warehouse_id))
-            ->when($request->store_id,     fn($q) => $q->where('store_id', $request->store_id))
-            ->when($request->status,       fn($q) => $q->where('status', $request->status))
-            ->when($request->date_from,    fn($q) => $q->whereDate('created_at', '>=', $request->date_from))
-            ->when($request->date_to,      fn($q) => $q->whereDate('created_at', '<=', $request->date_to))
+            ->when($warehouseId,       fn($q) => $q->where('warehouse_id', $warehouseId))
+            ->when($storeId,           fn($q) => $q->where('store_id', $storeId))
+            ->when($request->status,      fn($q) => $q->where('status', $request->status))
+            ->when($request->date_from,   fn($q) => $q->whereDate('created_at', '>=', $request->date_from))
+            ->when($request->date_to,     fn($q) => $q->whereDate('created_at', '<=', $request->date_to))
             ->orderBy('created_at', 'desc')
-            ->limit(500)
+            ->limit(1000)
             ->get();
 
-        $warehouse = $request->warehouse_id ? Warehouse::find($request->warehouse_id) : null;
-        $store     = $request->store_id ? Store::find($request->store_id) : null;
+        $warehouse = $warehouseId ? Warehouse::find($warehouseId) : null;
+        $store     = $storeId ? Store::find($storeId) : null;
 
         $pdf = Pdf::loadView('exports.pdf.shipment', compact('shipments', 'warehouse', 'store', 'request'))
             ->setPaper('a4', 'portrait');
@@ -313,16 +412,92 @@ class ExportController extends Controller
     public function shipmentExcel(Request $request)
     {
         $this->authorize('export report');
+        $user = auth()->user();
+
+        // Enforce role-based filtering
+        if ($user->hasRole(['superadmin', 'owner', 'finance'])) {
+            $warehouseId = $request->warehouse_id;
+            $storeId     = $request->store_id;
+        } elseif ($user->hasRole('admin gudang')) {
+            $warehouses  = $user->warehouses()->pluck('warehouses.id');
+            $warehouseId = $request->warehouse_id ?? $warehouses->first();
+            $storeId     = $request->store_id;
+        } elseif ($user->hasRole('kepala toko')) {
+            $warehouseId = $request->warehouse_id;
+            $stores      = $user->stores()->pluck('stores.id');
+            $storeId     = $request->store_id ?? $stores->first();
+        } else {
+            abort(403);
+        }
 
         return Excel::download(
             new ShipmentExport(
-                $request->warehouse_id,
-                $request->store_id,
+                $warehouseId,
+                $storeId,
                 $request->status,
                 $request->date_from,
                 $request->date_to
             ),
             'laporan-pengiriman-' . now()->format('Ymd-His') . '.xlsx'
+        );
+    }
+
+    public function inboundPdf(Request $request)
+    {
+        $this->authorize('export report');
+        $user = auth()->user();
+
+        if ($user->hasRole(['superadmin', 'owner', 'finance'])) {
+            $warehouseId = $request->warehouse_id;
+        } elseif ($user->hasRole('admin gudang')) {
+            $warehouses  = $user->warehouses()->pluck('warehouses.id');
+            $warehouseId = $request->warehouse_id ?? $warehouses->first();
+            if ($request->warehouse_id && !$warehouses->contains($request->warehouse_id)) {
+                $warehouseId = $warehouses->first();
+            }
+        } else {
+            abort(403);
+        }
+
+        $inbounds = Inbound::with(['warehouse', 'creator', 'items'])
+            ->when($warehouseId,       fn($q) => $q->where('warehouse_id', $warehouseId))
+            ->when($request->status,      fn($q) => $q->where('status', $request->status))
+            ->when($request->date_from,   fn($q) => $q->whereDate('created_at', '>=', $request->date_from))
+            ->when($request->date_to,     fn($q) => $q->whereDate('created_at', '<=', $request->date_to))
+            ->orderBy('created_at', 'desc')
+            ->limit(1000)
+            ->get();
+
+        $warehouse = $warehouseId ? Warehouse::find($warehouseId) : null;
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('exports.pdf.inbound', compact('inbounds', 'warehouse', 'request'))
+            ->setPaper('a4', 'portrait');
+
+        return $pdf->download('laporan-barang-masuk-' . now()->format('Ymd-His') . '.pdf');
+    }
+
+    public function inboundExcel(Request $request)
+    {
+        $this->authorize('export report');
+        $user = auth()->user();
+
+        if ($user->hasRole(['superadmin', 'owner', 'finance'])) {
+            $warehouseId = $request->warehouse_id;
+        } elseif ($user->hasRole('admin gudang')) {
+            $warehouses  = $user->warehouses()->pluck('warehouses.id');
+            $warehouseId = $request->warehouse_id ?? $warehouses->first();
+        } else {
+            abort(403);
+        }
+
+        return Excel::download(
+            new \App\Exports\InboundExport(
+                $warehouseId,
+                $request->status,
+                $request->date_from,
+                $request->date_to
+            ),
+            'laporan-barang-masuk-' . now()->format('Ymd-His') . '.xlsx'
         );
     }
 

@@ -21,24 +21,51 @@ class InboundController extends Controller
     public function index(Request $request): View
     {
         $this->authorize('view warehouse');
+        $user = auth()->user();
+
+        // Ambil list gudang sesuai role
+        if ($user->hasRole(['superadmin', 'owner', 'finance'])) {
+            $warehouses = Warehouse::where('is_active', true)->orderBy('name')->get();
+        } elseif ($user->hasRole('admin gudang')) {
+            $warehouses = $user->warehouses()->where('is_active', true)->orderBy('name')->get();
+        } else {
+            $warehouses = collect();
+        }
+
+        // Tentukan warehouseId aktif untuk filter
+        $warehouseId = $request->warehouse_id;
+        if ($user->hasRole('admin gudang')) {
+            $warehouseId = $request->warehouse_id ?? $warehouses->first()?->id;
+            if ($request->warehouse_id && !$warehouses->contains('id', $request->warehouse_id)) {
+                $warehouseId = $warehouses->first()?->id;
+            }
+        }
+
+        $currentWarehouse = $warehouseId ? $warehouses->firstWhere('id', $warehouseId) : null;
 
         $inbounds = Inbound::with(['warehouse', 'creator'])
-            ->when($request->warehouse_id, fn($q) => $q->where('warehouse_id', $request->warehouse_id))
+            ->when($warehouseId, fn($q) => $q->where('warehouse_id', $warehouseId))
             ->when($request->status, fn($q) => $q->where('status', $request->status))
             ->latest()
             ->paginate(30)
             ->withQueryString();
 
-        $warehouses = Warehouse::where('is_active', true)->orderBy('name')->get();
-
-        return view('warehouse.inbound.index', compact('inbounds', 'warehouses'));
+        return view('warehouse.inbound.index', compact('inbounds', 'warehouses', 'warehouseId', 'currentWarehouse'));
     }
 
     public function create(): View
     {
         $this->authorize('create warehouse stock');
+        $user = auth()->user();
 
-        $warehouses = Warehouse::where('is_active', true)->orderBy('name')->get();
+        if ($user->hasRole(['superadmin', 'owner', 'finance'])) {
+            $warehouses = Warehouse::where('is_active', true)->orderBy('name')->get();
+        } elseif ($user->hasRole('admin gudang')) {
+            $warehouses = $user->warehouses()->where('is_active', true)->orderBy('name')->get();
+        } else {
+            $warehouses = collect();
+        }
+
         $refNo      = ReferenceNumberService::inbound();
 
         return view('warehouse.inbound.create', compact('warehouses', 'refNo'));
@@ -47,6 +74,7 @@ class InboundController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $this->authorize('create warehouse stock');
+        $user = auth()->user();
 
         $data = $request->validate([
             'warehouse_id'          => 'required|exists:warehouses,id',
@@ -57,6 +85,14 @@ class InboundController extends Controller
             'items.*.qty'           => 'required|integer|min:1',
             'items.*.unit_cost'     => 'nullable|numeric|min:0',
         ]);
+
+        // Security Check: Pastikan Admin Gudang tidak input gudang orang lain
+        if ($user->hasRole('admin gudang')) {
+            $allowedIds = $user->warehouses()->pluck('warehouses.id');
+            if (!$allowedIds->contains($data['warehouse_id'])) {
+                return back()->with('error', 'Anda tidak memiliki akses ke gudang yang dipilih.')->withInput();
+            }
+        }
 
         DB::transaction(function () use ($data, $request) {
             $refNo = ReferenceNumberService::inbound();

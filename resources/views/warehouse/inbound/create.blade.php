@@ -20,13 +20,22 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Gudang Tujuan <span class="text-red-500">*</span></label>
-                    <select name="warehouse_id" required
-                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 @error('warehouse_id') border-red-500 @enderror">
-                        <option value="">-- Pilih Gudang --</option>
-                        @foreach($warehouses as $wh)
-                        <option value="{{ $wh->id }}" {{ old('warehouse_id') == $wh->id ? 'selected' : '' }}>{{ $wh->name }}</option>
-                        @endforeach
-                    </select>
+                    @if(auth()->user()->hasRole('admin gudang') && $warehouses->count() === 1)
+                        <div class="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
+                            <span class="text-sm font-semibold text-gray-700">{{ $warehouses->first()->name }}</span>
+                            <input type="hidden" name="warehouse_id" value="{{ $warehouses->first()->id }}">
+                        </div>
+                    @else
+                        <select name="warehouse_id" required
+                            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 @error('warehouse_id') border-red-500 @enderror">
+                            <option value="">-- Pilih Gudang --</option>
+                            @foreach($warehouses as $wh)
+                            <option value="{{ $wh->id }}" {{ (old('warehouse_id') ?? ($warehouses->count() === 1 ? $warehouses->first()->id : '')) == $wh->id ? 'selected' : '' }}>
+                                {{ $wh->name }}
+                            </option>
+                            @endforeach
+                        </select>
+                    @endif
                     @error('warehouse_id')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
                 </div>
                 <div>

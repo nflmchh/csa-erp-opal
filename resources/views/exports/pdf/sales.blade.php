@@ -10,7 +10,7 @@
     margin-left: 1.5cm;
 }
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: DejaVu Sans, sans-serif; font-size: 10px; color: #111; }
+body { font-family: DejaVu Sans, sans-serif; font-size: 10px; color: #111; padding: 12px 14px; }
 .header-table { width: 100%; border-bottom: 2px solid #3730a3; margin-bottom: 16px; padding-bottom: 12px; }
 .header-table td { border: none; padding: 0; vertical-align: top; }
 .company { font-size: 16px; font-weight: bold; color: #3730a3; }

@@ -2,7 +2,7 @@
 
 namespace App\Exports;
 
-use App\Models\Shipment;
+use App\Models\Inbound;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
@@ -12,11 +12,10 @@ use Maatwebsite\Excel\Concerns\WithStyles;
 use Maatwebsite\Excel\Concerns\WithTitle;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class ShipmentExport implements FromCollection, WithHeadings, WithMapping, ShouldAutoSize, WithTitle, WithStyles
+class InboundExport implements FromCollection, WithHeadings, WithMapping, ShouldAutoSize, WithTitle, WithStyles
 {
     public function __construct(
-        protected ?string $warehouseId = null,
-        protected ?string $storeId     = null,
+        protected ?int    $warehouseId = null,
         protected ?string $status      = null,
         protected ?string $dateFrom    = null,
         protected ?string $dateTo      = null,
@@ -24,9 +23,8 @@ class ShipmentExport implements FromCollection, WithHeadings, WithMapping, Shoul
 
     public function collection(): Collection
     {
-        return Shipment::with(['warehouse', 'store', 'items'])
+        return Inbound::with(['warehouse', 'creator', 'items'])
             ->when($this->warehouseId, fn($q) => $q->where('warehouse_id', $this->warehouseId))
-            ->when($this->storeId,     fn($q) => $q->where('store_id', $this->storeId))
             ->when($this->status,      fn($q) => $q->where('status', $this->status))
             ->when($this->dateFrom,    fn($q) => $q->whereDate('created_at', '>=', $this->dateFrom))
             ->when($this->dateTo,      fn($q) => $q->whereDate('created_at', '<=', $this->dateTo))
@@ -36,25 +34,24 @@ class ShipmentExport implements FromCollection, WithHeadings, WithMapping, Shoul
 
     public function headings(): array
     {
-        return ['No. SHP', 'Gudang', 'Toko Tujuan', 'Status', 'Items', 'Total Qty', 'Tanggal'];
+        return ['No. Referensi', 'Gudang', 'Supplier', 'Status', 'Total Item', 'Total Qty', 'Tanggal Masuk', 'Dibuat Oleh'];
     }
 
-    public function map($shipment): array
+    public function map($inbound): array
     {
-        $statusLabel = ['draft' => 'Draft', 'sent' => 'Terkirim', 'received' => 'Diterima'];
-
         return [
-            $shipment->shipment_no,
-            $shipment->warehouse->name,
-            $shipment->store->name,
-            $statusLabel[$shipment->status] ?? $shipment->status,
-            $shipment->items->count(),
-            $shipment->totalQtySent(),
-            $shipment->created_at->format('d/m/Y H:i'),
+            $inbound->reference_no,
+            $inbound->warehouse->name,
+            $inbound->supplier_name ?? '-',
+            ucfirst($inbound->status),
+            $inbound->items->count(),
+            $inbound->items->sum('qty'),
+            $inbound->created_at->format('d/m/Y H:i'),
+            $inbound->creator->name,
         ];
     }
 
-    public function title(): string { return 'Laporan Pengiriman'; }
+    public function title(): string { return 'Laporan Barang Masuk'; }
 
     public function styles(Worksheet $sheet): array
     {

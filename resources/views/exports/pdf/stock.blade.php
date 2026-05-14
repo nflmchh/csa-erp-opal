@@ -10,7 +10,7 @@
     margin-left: 1.5cm;
 }
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: DejaVu Sans, sans-serif; font-size: 10px; color: #111; }
+body { font-family: DejaVu Sans, sans-serif; font-size: 10px; color: #111; padding: 12px 14px; }
 .header-table { width: 100%; border-bottom: 2px solid #16a34a; margin-bottom: 16px; padding-bottom: 12px; }
 .header-table td { border: none; padding: 0; vertical-align: top; }
 .company { font-size: 16px; font-weight: bold; color: #16a34a; }
@@ -34,7 +34,19 @@ body { font-family: DejaVu Sans, sans-serif; font-size: 10px; color: #111; }
             <div style="font-size:9px;color:#555">
                 {{ $locationType === 'warehouse' ? 'Gudang' : 'Toko' }}{{ $location ? ': ' . $location->name : ' (Semua)' }}
             </div>
-            <div style="font-size:8px;color:#999">Dicetak: {{ now()->format('d/m/Y H:i:s') }}</div>
+            @if(!empty($searchProduct))
+            <div style="font-size:8px;color:#555">Produk: <strong>{{ $searchProduct }}</strong></div>
+            @endif
+            @if(!empty($filterBrand))
+            <div style="font-size:8px;color:#555">Brand: <strong>{{ $filterBrand }}</strong></div>
+            @endif
+            @if(!empty($filterColor))
+            <div style="font-size:8px;color:#555">Warna: <strong>{{ $filterColor }}</strong></div>
+            @endif
+            @if(!empty($filterSize))
+            <div style="font-size:8px;color:#555">Ukuran: <strong>{{ $filterSize }}</strong></div>
+            @endif
+            <div style="font-size:8px;color:#999;margin-top:2px">Dicetak: {{ now()->format('d/m/Y H:i:s') }}</div>
         </td>
     </tr>
 </table>

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Report;
 
 use App\Http\Controllers\Controller;
+use App\Models\Inbound;
 use App\Models\Sale;
 use App\Models\Shipment;
 use App\Models\Stock;
@@ -81,34 +82,123 @@ class ReportController extends Controller
             $locationId   = $r->location_id;
         }
 
+        // Resolve current location object for display
+        $currentLocation = $locationId
+            ? ($locationType === 'warehouse' ? $warehouses->firstWhere('id', $locationId) : $stores->firstWhere('id', $locationId))
+            : null;
+
+        // Filter data tambahan: produk, brand, warna, ukuran
         $q = Stock::with(['variant.product.brand', 'variant.color', 'variant.size'])
-            ->where('qty', '>', 0)
-            ->where('location_type', $locationType)
-            ->when($locationId, fn($q) => $q->where('location_id', $locationId))
-            ->orderBy('qty', 'desc');
+            ->join('product_variants as pv', 'stocks.product_variant_id', '=', 'pv.id')
+            ->join('products as p', 'pv.product_id', '=', 'p.id')
+            ->where('stocks.qty', '>', 0)
+            ->where('stocks.location_type', $locationType)
+            ->when($locationId,        fn($q) => $q->where('stocks.location_id', $locationId))
+            ->when($r->search_product, fn($q) => $q->where('p.name', 'like', '%' . $r->search_product . '%'))
+            ->when($r->brand_id,       fn($q) => $q->where('p.brand_id', $r->brand_id))
+            ->when($r->color_id,       fn($q) => $q->where('pv.color_id', $r->color_id))
+            ->when($r->size_id,        fn($q) => $q->where('pv.size_id', $r->size_id))
+            ->select('stocks.*')
+            ->orderBy('stocks.qty', 'desc');
 
-        $stocks     = $q->paginate(50)->withQueryString();
-        $totalQty   = $q->toBase()->sum('qty');
+        $stocks   = $q->paginate(50)->withQueryString();
+        $totalQty = $q->toBase()->sum('stocks.qty');
 
-        return view('reports.stock', compact('stocks', 'warehouses', 'stores', 'locationType', 'locationId', 'totalQty'));
+        // Data untuk dropdown filter
+        $brands = \App\Models\Brand::orderBy('name')->get();
+        $colors = \App\Models\Color::orderBy('name')->get();
+        $sizes  = \App\Models\Size::orderBy('name')->get();
+
+        return view('reports.stock', compact(
+            'stocks', 'warehouses', 'stores', 'locationType', 'locationId',
+            'currentLocation', 'totalQty', 'brands', 'colors', 'sizes'
+        ));
     }
 
     public function shipment(Request $r)
     {
         $this->authorize('view report');
-        $warehouses = Warehouse::orderBy('name')->get();
-        $stores     = Store::orderBy('name')->get();
+        $user = auth()->user();
+
+        // Ambil list gudang & toko sesuai role
+        if ($user->hasRole(['superadmin', 'owner', 'finance'])) {
+            $warehouses = Warehouse::orderBy('name')->get();
+            $stores     = Store::orderBy('name')->get();
+        } elseif ($user->hasRole('admin gudang')) {
+            $warehouses = $user->warehouses()->orderBy('name')->get();
+            $stores     = Store::orderBy('name')->get();
+        } elseif ($user->hasRole('kepala toko')) {
+            $warehouses = Warehouse::orderBy('name')->get();
+            $stores     = $user->stores()->orderBy('name')->get();
+        } else {
+            $warehouses = collect();
+            $stores     = collect();
+        }
+
+        // Tentukan warehouseId aktif (Filter Asal)
+        $warehouseId = $r->warehouse_id;
+        if ($user->hasRole('admin gudang')) {
+            $warehouseId = $r->warehouse_id ?? $warehouses->first()?->id;
+            if ($r->warehouse_id && !$warehouses->contains('id', $r->warehouse_id)) {
+                $warehouseId = $warehouses->first()?->id;
+            }
+        }
+        $currentWarehouse = $warehouseId ? $warehouses->firstWhere('id', $warehouseId) : null;
+
+        // Tentukan storeId aktif (Filter Tujuan)
+        $storeId = $r->store_id;
+        if ($user->hasRole('kepala toko')) {
+            $storeId = $r->store_id ?? $stores->first()?->id;
+            if ($r->store_id && !$stores->contains('id', $r->store_id)) {
+                $storeId = $stores->first()?->id;
+            }
+        }
+        $currentStore = $storeId ? $stores->firstWhere('id', $storeId) : null;
 
         $shipments = Shipment::with(['warehouse', 'store', 'items'])
-            ->when($r->warehouse_id, fn($q) => $q->where('warehouse_id', $r->warehouse_id))
-            ->when($r->store_id,     fn($q) => $q->where('store_id', $r->store_id))
+            ->when($warehouseId,  fn($q) => $q->where('warehouse_id', $warehouseId))
+            ->when($storeId,      fn($q) => $q->where('store_id', $storeId))
             ->when($r->status,       fn($q) => $q->where('status', $r->status))
             ->when($r->date_from,    fn($q) => $q->whereDate('created_at', '>=', $r->date_from))
             ->when($r->date_to,      fn($q) => $q->whereDate('created_at', '<=', $r->date_to))
             ->orderBy('created_at', 'desc')
             ->paginate(30)->withQueryString();
 
-        return view('reports.shipment', compact('shipments', 'warehouses', 'stores'));
+        return view('reports.shipment', compact('shipments', 'warehouses', 'stores', 'warehouseId', 'storeId', 'currentWarehouse', 'currentStore'));
+    }
+
+    public function inbound(Request $r)
+    {
+        $this->authorize('view report');
+        $user = auth()->user();
+
+        if ($user->hasRole(['superadmin', 'owner', 'finance'])) {
+            $warehouses = Warehouse::orderBy('name')->get();
+        } elseif ($user->hasRole('admin gudang')) {
+            $warehouses = $user->warehouses()->orderBy('name')->get();
+        } else {
+            $warehouses = collect();
+        }
+
+        $warehouseId = $r->warehouse_id;
+        if ($user->hasRole('admin gudang')) {
+            $warehouseId = $r->warehouse_id ?? $warehouses->first()?->id;
+            if ($r->warehouse_id && !$warehouses->contains('id', $r->warehouse_id)) {
+                $warehouseId = $warehouses->first()?->id;
+            }
+        }
+
+        $currentWarehouse = $warehouseId ? $warehouses->firstWhere('id', $warehouseId) : null;
+
+        $inbounds = Inbound::with(['warehouse', 'creator', 'items'])
+            ->when($warehouseId,  fn($q) => $q->where('warehouse_id', $warehouseId))
+            ->when($r->status,       fn($q) => $q->where('status', $r->status))
+            ->when($r->date_from,    fn($q) => $q->whereDate('created_at', '>=', $r->date_from))
+            ->when($r->date_to,      fn($q) => $q->whereDate('created_at', '<=', $r->date_to))
+            ->orderBy('created_at', 'desc')
+            ->paginate(30)->withQueryString();
+
+        return view('reports.inbound', compact('inbounds', 'warehouses', 'warehouseId', 'currentWarehouse'));
     }
 
     public function transfer(Request $r)

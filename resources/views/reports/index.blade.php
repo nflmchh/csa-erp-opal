@@ -21,6 +21,7 @@
         </div>
     </a>
 
+    @unless(auth()->user()->hasRole('admin gudang'))
     <a href="{{ route('reports.sales') }}"
         class="bg-white rounded-xl border border-gray-200 p-6 hover:border-indigo-300 hover:shadow-sm transition group">
         <div class="flex items-start gap-4">
@@ -35,6 +36,7 @@
             </div>
         </div>
     </a>
+    @endunless
 
     <a href="{{ route('reports.stock') }}"
         class="bg-white rounded-xl border border-gray-200 p-6 hover:border-indigo-300 hover:shadow-sm transition group">
@@ -66,6 +68,24 @@
         </div>
     </a>
 
+    @unless(auth()->user()->hasRole('kepala toko'))
+    <a href="{{ route('reports.inbound') }}"
+        class="bg-white rounded-xl border border-gray-200 p-6 hover:border-indigo-300 hover:shadow-sm transition group">
+        <div class="flex items-start gap-4">
+            <div class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center shrink-0 group-hover:bg-blue-200 transition">
+                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                </svg>
+            </div>
+            <div>
+                <h3 class="font-semibold text-gray-800 text-sm">Laporan Barang Masuk</h3>
+                <p class="text-xs text-gray-500 mt-1">Riwayat penerimaan barang di gudang</p>
+            </div>
+        </div>
+    </a>
+    @endunless
+
+    @unless(auth()->user()->hasRole('admin gudang'))
     <a href="{{ route('reports.transfer') }}"
         class="bg-white rounded-xl border border-gray-200 p-6 hover:border-indigo-300 hover:shadow-sm transition group">
         <div class="flex items-start gap-4">
@@ -80,6 +100,7 @@
             </div>
         </div>
     </a>
+    @endunless
 
     @can('view finance')
     <a href="{{ route('finance.index') }}"

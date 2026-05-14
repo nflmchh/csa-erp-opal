@@ -6,39 +6,87 @@
 @section('content')
 <div class="space-y-4">
 
-    <form method="GET" class="bg-white rounded-xl border border-gray-200 p-4 flex flex-wrap gap-3 items-end">
-        <div>
-            <label class="block text-xs font-medium text-gray-500 mb-1">Tipe Lokasi</label>
-            <select name="location_type" onchange="this.form.submit()"
-                class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                <option value="warehouse" {{ $locationType === 'warehouse' ? 'selected' : '' }}>Gudang</option>
-                <option value="store"     {{ $locationType === 'store'     ? 'selected' : '' }}>Toko</option>
-            </select>
+    {{-- Info Lokasi (read-only, sesuai role) --}}
+    <div class="bg-white rounded-xl border border-gray-200 p-4 flex flex-wrap gap-4 items-center">
+        <div class="flex items-center gap-2">
+            <span class="text-xs font-medium text-gray-500">Tipe Lokasi:</span>
+            <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold
+                {{ $locationType === 'warehouse' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700' }}">
+                {{ $locationType === 'warehouse' ? '🏭 Gudang' : '🏪 Toko' }}
+            </span>
         </div>
-        @if($locationType === 'warehouse')
-        <div>
-            <label class="block text-xs font-medium text-gray-500 mb-1">Gudang</label>
-            <select name="location_id" onchange="this.form.submit()"
-                class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                <option value="">Semua Gudang</option>
-                @foreach($warehouses as $w)
-                <option value="{{ $w->id }}" {{ $locationId == $w->id ? 'selected' : '' }}>{{ $w->name }}</option>
-                @endforeach
-            </select>
+        <div class="flex items-center gap-2">
+            <span class="text-xs font-medium text-gray-500">Lokasi:</span>
+            <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-gray-100 text-gray-700">
+                @if($currentLocation)
+                    {{ $currentLocation->name }}
+                @else
+                    Semua {{ $locationType === 'warehouse' ? 'Gudang' : 'Toko' }}
+                @endif
+            </span>
         </div>
-        @else
-        <div>
-            <label class="block text-xs font-medium text-gray-500 mb-1">Toko</label>
-            <select name="location_id" onchange="this.form.submit()"
-                class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                <option value="">Semua Toko</option>
-                @foreach($stores as $s)
-                <option value="{{ $s->id }}" {{ $locationId == $s->id ? 'selected' : '' }}>{{ $s->name }}</option>
-                @endforeach
-            </select>
-        </div>
+    </div>
+
+    {{-- Filter Produk / Brand / Warna / Ukuran --}}
+    <form method="GET" class="bg-white rounded-xl border border-gray-200 p-4">
+        {{-- Pertahankan parameter lokasi yang sudah ada (hidden) --}}
+        <input type="hidden" name="location_type" value="{{ $locationType }}">
+        @if($locationId)
+        <input type="hidden" name="location_id" value="{{ $locationId }}">
         @endif
-        <a href="{{ route('reports.stock') }}" class="bg-gray-100 text-gray-600 text-sm px-4 py-2 rounded-lg self-end">Reset</a>
+
+        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Filter Export</p>
+        <div class="flex flex-wrap gap-3 items-end">
+            {{-- Filter Produk --}}
+            <div>
+                <label class="block text-xs font-medium text-gray-500 mb-1">Produk</label>
+                <input type="text" name="search_product" value="{{ request('search_product') }}"
+                    placeholder="Cari nama produk..."
+                    class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-44">
+            </div>
+
+            {{-- Filter Brand --}}
+            <div>
+                <label class="block text-xs font-medium text-gray-500 mb-1">Brand</label>
+                <select name="brand_id" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <option value="">Semua Brand</option>
+                    @foreach($brands as $brand)
+                    <option value="{{ $brand->id }}" {{ request('brand_id') == $brand->id ? 'selected' : '' }}>
+                        {{ $brand->name }}
+                    </option>
+                    @endforeach
+                </select>
+            </div>
+
+            {{-- Filter Warna --}}
+            <div>
+                <label class="block text-xs font-medium text-gray-500 mb-1">Warna</label>
+                <select name="color_id" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <option value="">Semua Warna</option>
+                    @foreach($colors as $color)
+                    <option value="{{ $color->id }}" {{ request('color_id') == $color->id ? 'selected' : '' }}>
+                        {{ $color->name }}
+                    </option>
+                    @endforeach
+                </select>
+            </div>
+
+            {{-- Filter Ukuran --}}
+            <div>
+                <label class="block text-xs font-medium text-gray-500 mb-1">Ukuran</label>
+                <select name="size_id" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <option value="">Semua Ukuran</option>
+                    @foreach($sizes as $size)
+                    <option value="{{ $size->id }}" {{ request('size_id') == $size->id ? 'selected' : '' }}>
+                        {{ $size->name }}
+                    </option>
+                    @endforeach
+                </select>
+            </div>
+
+            <button type="submit" class="bg-indigo-600 text-white text-sm px-4 py-2 rounded-lg hover:bg-indigo-700 transition">Filter</button>
+            <a href="{{ route('reports.stock') }}" class="bg-gray-100 text-gray-600 text-sm px-4 py-2 rounded-lg hover:bg-gray-200 transition">Reset</a>
+        </div>
     </form>
 
     {{-- Export buttons --}}

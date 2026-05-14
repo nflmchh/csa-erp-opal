@@ -7,16 +7,24 @@
 <div class="space-y-4">
 
     <form method="GET" class="bg-white rounded-xl border border-gray-200 p-4 flex flex-wrap gap-3 items-end">
+        @if(auth()->user()->hasRole('admin gudang'))
+        <div class="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
+            <span class="block text-[10px] uppercase font-bold text-gray-400">Gudang Aktif</span>
+            <span class="text-sm font-semibold text-gray-700">{{ $currentWarehouse->name ?? 'Semua Gudang' }}</span>
+            <input type="hidden" name="warehouse_id" value="{{ $warehouseId }}">
+        </div>
+        @else
         <div>
             <label class="block text-xs font-medium text-gray-500 mb-1">Gudang</label>
             <select name="warehouse_id" onchange="this.form.submit()"
                 class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
                 <option value="">Semua Gudang</option>
                 @foreach($warehouses as $wh)
-                <option value="{{ $wh->id }}" {{ request('warehouse_id') == $wh->id ? 'selected' : '' }}>{{ $wh->name }}</option>
+                <option value="{{ $wh->id }}" {{ $warehouseId == $wh->id ? 'selected' : '' }}>{{ $wh->name }}</option>
                 @endforeach
             </select>
         </div>
+        @endif
         <div>
             <label class="block text-xs font-medium text-gray-500 mb-1">Status</label>
             <select name="status" onchange="this.form.submit()"

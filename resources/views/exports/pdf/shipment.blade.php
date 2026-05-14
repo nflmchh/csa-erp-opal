@@ -10,7 +10,7 @@
     margin-left: 1.5cm;
 }
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: DejaVu Sans, sans-serif; font-size: 10px; color: #111; }
+body { font-family: DejaVu Sans, sans-serif; font-size: 10px; color: #111; padding: 12px 14px; }
 .header-table { width: 100%; border-bottom: 2px solid #f97316; margin-bottom: 16px; padding-bottom: 12px; }
 .header-table td { border: none; padding: 0; vertical-align: top; }
 .company { font-size: 16px; font-weight: bold; color: #f97316; }
@@ -59,9 +59,10 @@ body { font-family: DejaVu Sans, sans-serif; font-size: 10px; color: #111; }
             <th style="width: 16%">No. SHP</th>
             <th style="width: 20%">Gudang</th>
             <th style="width: 20%">Toko Tujuan</th>
-            <th class="text-center" style="width: 12%">Status</th>
-            <th class="text-right" style="width: 9%">Qty</th>
-            <th style="width: 20%">Tanggal</th>
+            <th class="text-center" style="width: 10%">Status</th>
+            <th class="text-right" style="width: 8%">Items</th>
+            <th class="text-right" style="width: 8%">Qty</th>
+            <th style="width: 15%">Tanggal</th>
         </tr>
     </thead>
     <tbody>
@@ -76,7 +77,8 @@ body { font-family: DejaVu Sans, sans-serif; font-size: 10px; color: #111; }
             <td>{{ $shipment->warehouse->name }}</td>
             <td>{{ $shipment->store->name }}</td>
             <td class="text-center"><span class="{{ $badgeClass }}">{{ $statusLabel }}</span></td>
-            <td class="text-right" style="font-weight:bold">{{ number_format($shipment->items->sum('qty')) }}</td>
+            <td class="text-right">{{ number_format($shipment->items->count()) }}</td>
+            <td class="text-right" style="font-weight:bold;color:#f97316">{{ number_format($shipment->totalQtySent()) }}</td>
             <td>{{ $shipment->created_at->format('d/m/Y H:i') }}</td>
         </tr>
         @endforeach
@@ -88,8 +90,11 @@ body { font-family: DejaVu Sans, sans-serif; font-size: 10px; color: #111; }
         <td>
             Total Pengiriman<strong>{{ number_format(count($shipments)) }}</strong>
         </td>
-        <td style="width: 220px">
-            Total Qty Barang<strong>{{ number_format($shipments->sum(fn($s) => $s->items->sum('qty'))) }}</strong>
+        <td style="width: 180px">
+            Total Macam Barang<strong>{{ number_format($shipments->sum(fn($s) => $s->items->count())) }}</strong>
+        </td>
+        <td style="width: 180px">
+            Total Qty Barang<strong>{{ number_format($shipments->sum(fn($s) => $s->totalQtySent())) }}</strong>
         </td>
     </tr>
 </table>
