@@ -80,7 +80,7 @@
                     <label class="block text-sm font-bold text-emerald-900 mb-1">Reward Toko (Update)</label>
                     <div class="relative">
                         <span class="absolute left-3 top-2.5 text-sm text-emerald-400">Rp</span>
-                        <input type="text" inputmode="numeric" name="reward_store" value="{{ old('reward_store', $product->reward_store) }}" required
+                        <input type="text" inputmode="numeric" name="reward_store" value="{{ old('reward_store', $product->reward_store ?? 500) }}" required
                             class="input-currency w-full border border-emerald-200 rounded-lg pl-9 pr-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500">
                     </div>
                 </div>
@@ -89,7 +89,7 @@
                     <label class="block text-sm font-bold text-emerald-900 mb-1">Reward Owner (Update)</label>
                     <div class="relative">
                         <span class="absolute left-3 top-2.5 text-sm text-emerald-400">Rp</span>
-                        <input type="text" inputmode="numeric" name="reward_owner" value="{{ old('reward_owner', $product->reward_owner) }}" required
+                        <input type="text" inputmode="numeric" name="reward_owner" value="{{ old('reward_owner', $product->reward_owner ?? 4500) }}" required
                             class="input-currency w-full border border-emerald-200 rounded-lg pl-9 pr-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500">
                     </div>
                 </div>
