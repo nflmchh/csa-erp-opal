@@ -30,15 +30,17 @@ class DashboardController extends Controller
         if ($user->hasRole('admin gudang') || $user->hasRole('operator gudang')) {
             $warehouseIds = $user->warehouses()->pluck('warehouses.id');
             
+            $today = now()->toDateString();
             $lowStock = Stock::where('location_type', 'warehouse')->whereIn('location_id', $warehouseIds)->where('qty', '<=', 5)->count();
             $totalWarehouseStock = Stock::where('location_type', 'warehouse')->whereIn('location_id', $warehouseIds)->sum('qty');
+            $todayExpense = Expense::whereIn('warehouse_id', $warehouseIds)->whereDate('expense_date', $today)->sum('amount');
             
             // TAMBAHAN: Ambil 10 produk terbaru (semua produk)
             $products = Product::with(['brand', 'category', 'images', 'variants.stocks' => function($q) use ($warehouseIds) {
                 $q->where('location_type', 'warehouse')->whereIn('location_id', $warehouseIds);
             }])->latest()->take(10)->get();
             
-            return view('dashboard.warehouse', compact('lowStock', 'totalWarehouseStock', 'products'));
+            return view('dashboard.warehouse', compact('lowStock', 'totalWarehouseStock', 'todayExpense', 'products'));
         }
 
         // ====================================================================
@@ -47,9 +49,12 @@ class DashboardController extends Controller
         if ($user->hasRole('kepala toko')) {
             $storeIds = $user->stores()->pluck('stores.id');
             
-            $todaySales = Sale::whereIn('store_id', $storeIds)->whereDate('created_at', now()->toDateString())->sum('total_amount');
-            $todayOrders = Sale::whereIn('store_id', $storeIds)->whereDate('created_at', now()->toDateString())->count();
-            
+            $today = now()->toDateString();
+            $todaySales = Sale::whereIn('store_id', $storeIds)->whereDate('created_at', $today)->sum('total_amount');
+            $todayOrders = Sale::whereIn('store_id', $storeIds)->whereDate('created_at', $today)->count();
+            $todayExpense = Expense::whereIn('store_id', $storeIds)->whereDate('expense_date', $today)->sum('amount');
+            $todayProfit = $todaySales - $todayExpense;
+
             // TAMBAHAN: Ambil 10 produk yang HANYA ADA STOKNYA di toko milik user ini
             $products = Product::with(['brand', 'category', 'images', 'variants.stocks' => function($q) use ($storeIds) {
                 $q->where('location_type', 'store')->whereIn('location_id', $storeIds);
@@ -61,7 +66,7 @@ class DashboardController extends Controller
             })
             ->latest()->take(10)->get();
             
-            return view('dashboard.store', compact('todaySales', 'todayOrders', 'products'));
+            return view('dashboard.store', compact('todaySales', 'todayOrders', 'todayExpense', 'todayProfit', 'products'));
         }
 
         // ====================================================================
