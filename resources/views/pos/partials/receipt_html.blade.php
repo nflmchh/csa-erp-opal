@@ -35,22 +35,10 @@
 
 <div class="preview-container">
     @if(auth()->check() && auth()->user()->hasRole('superadmin'))
-    <div class="no-print" style="margin: 0 auto 12px; width: 72mm; font-family: sans-serif;">
-        <div style="background: #4f46e5; color: white; padding: 8px 12px; border-radius: 10px; font-size: 10px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
-            <span>PRINTER:</span>
-            <select onchange="localStorage.setItem('pos_print_method', this.value); window.location.reload();" 
-                    style="background: white; border: none; padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: bold; cursor: pointer; color: #4f46e5;">
-                <option value="pc_usb">USB (BROWSER)</option>
-                <option value="pc_bluetooth">BLUETOOTH</option>
-                <option value="android_flutter">ANDROID APP</option>
-            </select>
+    <div class="no-print" style="margin: 0 auto 12px; width: 72mm; font-family: sans-serif; text-align: center;">
+        <div style="background: #4f46e5; color: white; padding: 6px 12px; border-radius: 8px; font-size: 9px; font-weight: bold; display: inline-block; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            SUPERADMIN MODE: PREVIEW STRUK
         </div>
-        <script>
-            (function(){
-                const sel = document.currentScript.previousElementSibling.querySelector('select');
-                sel.value = localStorage.getItem('pos_print_method') || 'pc_usb';
-            })();
-        </script>
     </div>
     @endif
     <div class="receipt-wrapper">

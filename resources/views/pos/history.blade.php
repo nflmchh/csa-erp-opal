@@ -175,21 +175,39 @@
         <div x-show="showReceiptModal" style="display: none; z-index: 999999;" class="fixed inset-0 flex items-center justify-center bg-gray-900/70 backdrop-blur-md p-4 transition-opacity">
             <div @click.outside="showReceiptModal = false" x-show="showReceiptModal" x-transition.scale.origin.bottom class="bg-white w-full max-w-md rounded-[2rem] overflow-hidden shadow-2xl flex flex-col max-h-[90vh] border border-white/20">
                 <!-- Header Modal -->
-                <div class="bg-indigo-600 px-6 py-5 flex justify-between items-center shrink-0 relative overflow-hidden">
+                <div class="bg-indigo-600 px-6 py-4 flex flex-col gap-3 shrink-0 relative overflow-hidden">
                     <div class="absolute -right-4 -top-4 w-24 h-24 bg-white/10 rounded-full blur-xl"></div>
                     <div class="absolute -left-4 -bottom-4 w-24 h-24 bg-black/10 rounded-full blur-xl"></div>
-                    <div class="relative flex items-center gap-3 z-10">
-                        <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
-                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                    
+                    <div class="flex justify-between items-center relative z-10">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
+                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                            </div>
+                            <div>
+                                <h3 class="text-white font-black text-xl tracking-wide">Cetak Struk</h3>
+                                <p class="text-indigo-100 text-xs font-medium">Preview transaksi terpilih</p>
+                            </div>
                         </div>
-                        <div>
-                            <h3 class="text-white font-black text-xl tracking-wide">Cetak Struk</h3>
-                            <p class="text-indigo-100 text-xs font-medium">Preview transaksi terpilih</p>
-                        </div>
+                        <button @click="showReceiptModal = false" class="text-white/70 hover:text-white bg-black/10 hover:bg-black/20 p-2 rounded-full transition-colors">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                        </button>
                     </div>
-                    <button @click="showReceiptModal = false" class="text-white/70 hover:text-white bg-black/10 hover:bg-black/20 p-2 rounded-full transition-colors z-10">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                    </button>
+
+                    @if(auth()->user()->hasRole('superadmin'))
+                    <!-- Superadmin Printer Selector -->
+                    <div class="relative z-10 bg-black/10 border border-white/10 rounded-xl p-2 flex items-center justify-between">
+                        <span class="text-[10px] font-bold text-white/80 uppercase tracking-widest ml-1">Setting Printer:</span>
+                        <select x-model="printMethod" @change="localStorage.setItem('pos_print_method', $event.target.value)" 
+                                class="bg-white border-none rounded-lg py-1 px-3 text-[10px] font-black text-indigo-600 focus:ring-0 cursor-pointer">
+                            <option value="pc_usb">USB (BROWSER)</option>
+                            <option value="pc_bluetooth">BLUETOOTH (PC)</option>
+                            <option value="ios_bluefy">BLUETOOTH (IOS)</option>
+                            <option value="android_bluetooth">BLUETOOTH (ANDROID)</option>
+                            <option value="android_flutter">ANDROID APP</option>
+                        </select>
+                    </div>
+                    @endif
                 </div>
                 
                 <!-- Area Preview Struk -->
