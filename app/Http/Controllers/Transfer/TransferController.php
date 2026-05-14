@@ -22,8 +22,14 @@ class TransferController extends Controller
         $user   = Auth::user();
         $stores = Store::orderBy('name')->get();
 
+        $fromStoreId = $r->get('from_store_id');
+        // Jika belum ada filter dan user punya toko primer, default ke toko tersebut
+        if (!$r->has('from_store_id') && $user->primaryStore()) {
+            $fromStoreId = $user->primaryStore()->id;
+        }
+
         $q = Transfer::with(['fromStore', 'toStore', 'items'])
-            ->when($r->from_store_id, fn($q) => $q->where('from_store_id', $r->from_store_id))
+            ->when($fromStoreId, fn($q) => $q->where('from_store_id', $fromStoreId))
             ->when($r->to_store_id,   fn($q) => $q->where('to_store_id', $r->to_store_id))
             ->when($r->status,        fn($q) => $q->where('status', $r->status))
             ->orderBy('created_at', 'desc');
@@ -37,8 +43,9 @@ class TransferController extends Controller
         }
 
         $transfers = $q->paginate(20)->withQueryString();
+        $transfers->appends(['from_store_id' => $fromStoreId]);
 
-        return view('transfers.index', compact('transfers', 'stores'));
+        return view('transfers.index', compact('transfers', 'stores', 'fromStoreId'));
     }
 
     public function create()

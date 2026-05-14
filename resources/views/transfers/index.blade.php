@@ -8,15 +8,26 @@
 
     <div class="flex items-center justify-between">
         <form method="GET" class="bg-white rounded-xl border border-gray-200 p-4 flex flex-wrap gap-3 items-end flex-1 mr-4">
+            @php
+                $isRestricted = !auth()->user()->hasAnyRole(['superadmin', 'owner', 'finance', 'admin gudang']);
+                $primaryStore = auth()->user()->primaryStore();
+            @endphp
             <div>
                 <label class="block text-xs font-medium text-gray-500 mb-1">Toko Asal</label>
-                <select name="from_store_id" onchange="this.form.submit()"
-                    class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    <option value="">Semua</option>
-                    @foreach($stores as $s)
-                    <option value="{{ $s->id }}" {{ request('from_store_id') == $s->id ? 'selected' : '' }}>{{ $s->name }}</option>
-                    @endforeach
-                </select>
+                @if($isRestricted && $primaryStore)
+                    <div class="bg-gray-100 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-600 font-medium">
+                        {{ $primaryStore->name }}
+                        <input type="hidden" name="from_store_id" value="{{ $primaryStore->id }}">
+                    </div>
+                @else
+                    <select name="from_store_id" onchange="this.form.submit()"
+                        class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="">Semua</option>
+                        @foreach($stores as $s)
+                        <option value="{{ $s->id }}" {{ $fromStoreId == $s->id ? 'selected' : '' }}>{{ $s->name }}</option>
+                        @endforeach
+                    </select>
+                @endif
             </div>
             <div>
                 <label class="block text-xs font-medium text-gray-500 mb-1">Toko Tujuan</label>
@@ -24,7 +35,8 @@
                     class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
                     <option value="">Semua</option>
                     @foreach($stores as $s)
-                    <option value="{{ $s->id }}" {{ request('to_store_id') == $s->id ? 'selected' : '' }}>{{ $s->name }}</option>
+                        @if($isRestricted && $primaryStore && $s->id == $primaryStore->id) @continue @endif
+                        <option value="{{ $s->id }}" {{ request('to_store_id') == $s->id ? 'selected' : '' }}>{{ $s->name }}</option>
                     @endforeach
                 </select>
             </div>
