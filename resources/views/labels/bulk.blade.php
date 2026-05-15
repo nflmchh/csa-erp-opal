@@ -13,12 +13,9 @@
     @endphp
     <title>{{ $pdfName }}</title>
 
-    <!-- Menggunakan Tailwind & Alpine JS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Menggunakan Tailwind & Alpine JS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         body {
             background-color: #f1f5f9;
@@ -96,6 +93,8 @@
             'sku' => $item['variant']->sku,
             'name' => $item['variant']->product->name,
             'size' => $item['variant']->size->name,
+            'color' => optional($item['variant']->color)->name ?? '-',
+            'price' => $item['variant']->sellPrice(),
             'copies' => $item['copies']
         ];
     }
@@ -154,32 +153,9 @@
                 </div>
             </div>
 
-            <!-- Konfigurasi Printer (BARU) -->
-            <div class="space-y-3">
-                <h3 class="font-bold text-gray-800 border-b pb-1">2. Koneksi Printer</h3>
-                <div class="space-y-2">
-                    <label class="block">
-                        <span class="text-[10px] uppercase text-gray-500 font-bold">Pilih Printer</span>
-                        <select x-model="selectedPrinter"
-                            @change="localStorage.setItem('label_printer_target', $event.target.value)"
-                            class="w-full bg-gray-50 border border-gray-300 rounded px-2 py-1.5 focus:ring-2 focus:ring-indigo-500 text-xs">
-                            <option value="browser">Sistem Browser (Dialog)</option>
-                            <option value="printer_1">Label Printer 1 (USB)</option>
-                            <option value="printer_2">Label Printer 2 (USB)</option>
-                            <option value="printer_3">Label Printer 3 (USB)</option>
-                            <option value="printer_4">Label Printer 4 (USB)</option>
-                        </select>
-                    </label>
-                    <p class="text-[9px] text-gray-400 italic leading-tight">
-                        * Catatan: Untuk pencetakan langsung tanpa dialog, pastikan fitur "Kiosk Printing" aktif di
-                        browser atau gunakan printer default sistem.
-                    </p>
-                </div>
-            </div>
-
             <!-- Dimensi & Bentuk Label -->
             <div class="space-y-3">
-                <h3 class="font-bold text-gray-800 border-b pb-1">3. Ukuran per Label</h3>
+                <h3 class="font-bold text-gray-800 border-b pb-1">2. Ukuran per Label</h3>
                 <div class="flex gap-3 mb-2">
                     <label class="block flex-1">
                         <span class="text-[10px] uppercase text-gray-500 font-bold">Lebar (mm)</span>
@@ -245,9 +221,18 @@
                 </div>
             </div>
 
+            <!-- Konten Label -->
+            <div class="space-y-3">
+                <h3 class="font-bold text-gray-800 border-b pb-1">5. Konten Label</h3>
+                <label class="flex items-center gap-2 cursor-pointer bg-indigo-50 p-2 rounded border border-indigo-100">
+                    <input type="checkbox" x-model="c.showPrice" class="w-4 h-4 text-indigo-600 focus:ring-indigo-500 rounded">
+                    <span class="text-sm font-bold text-indigo-900">Tampilkan Harga</span>
+                </label>
+            </div>
+
             <!-- Daftar Barang & Jumlah (BARU) -->
             <div class="space-y-3">
-                <h3 class="font-bold text-gray-800 border-b pb-1">5. Jumlah Label per Produk</h3>
+                <h3 class="font-bold text-gray-800 border-b pb-1">6. Jumlah Label per Produk</h3>
                 <div class="space-y-2 max-h-60 overflow-y-auto pr-1 custom-scrollbar">
                     <template x-for="(item, index) in items" :key="item.sku">
                         <div class="bg-gray-50 p-2 rounded border border-gray-200">
@@ -303,11 +288,11 @@
             <template x-for="(page, pIdx) in calculatedPages" :key="pIdx">
 
                 <!-- Lembaran Kertas -->
-                <div class="sheet bg-white shadow-xl relative"
-                    :style="`width: ${c.paperW}mm; height: ${c.paperH}mm; padding-top: ${c.marginTop}mm; padding-left: ${c.marginLeft}mm;`">
+                <div class="sheet bg-white shadow-xl relative flex justify-center"
+                    :style="`width: ${c.paperW}mm; height: ${c.paperH}mm; padding-top: ${c.marginTop}mm; font-family: sans-serif; text-align: center;`">
 
                     <!-- Grid Label di atas kertas -->
-                    <div class="grid"
+                    <div class="grid justify-center"
                         :style="`grid-template-columns: repeat(${c.col}, ${c.labelW}mm); gap: ${c.gapY}mm ${c.gapX}mm;`">
 
                         <!-- Looping Slot dalam Halaman -->
@@ -321,21 +306,41 @@
 
                                 {{-- Jika Slot Aktif & Ada Data Barang --}}
                                 <template x-if="!slot.skipped && slot.item">
-                                    <div class="flex flex-col h-full w-full items-center justify-center"
-                                        style="padding: 0.5mm">
-                                        <!-- Header Text (Top) -->
-                                        <div class="w-full font-bold text-black text-center"
-                                            style="font-size: 7pt; line-height: 1.1; margin-bottom: 1mm;">
-                                            <div class="truncate" x-text="`${slot.item.name} (${slot.item.size})`">
+                                        <div class="flex h-full w-full items-center p-1 overflow-hidden">
+                                            <!-- Sisi Kiri (QR Code + SKU jika ada harga) -->
+                                            <div class="shrink-0 flex flex-col items-center justify-center" style="width: 35%;">
+                                                <div x-init="renderQRCode($el, slot.item.sku)"></div>
+                                                <template x-if="c.showPrice">
+                                                    <div class="font-mono font-bold text-gray-600 mt-0.5 text-center leading-none"
+                                                        style="font-size: 6pt;" x-text="slot.item.sku">
+                                                    </div>
+                                                </template>
+                                            </div>
+
+                                            <!-- Sisi Kanan (Informasi Produk + Harga jika ada) -->
+                                            <div class="flex-1 flex flex-col justify-center pl-3 overflow-hidden text-left">
+                                                <div class="font-black text-black leading-tight mb-1" style="font-size: 11pt;"
+                                                    x-text="`${slot.item.name}`">
+                                                </div>
+                                                <div class="font-bold text-gray-700 leading-tight mb-1"
+                                                    style="font-size: 8.5pt;" x-text="`${slot.item.color} / ${slot.item.size}`">
+                                                </div>
+
+                                                {{-- Harga (Jika diaktifkan) --}}
+                                                <template x-if="c.showPrice">
+                                                    <div class="font-black text-indigo-700 mt-1 pt-1 border-t border-dashed border-gray-400"
+                                                        style="font-size: 12pt;" x-text="formatCurrency(slot.item.price)">
+                                                    </div>
+                                                </template>
+
+                                                {{-- SKU (Jika harga TIDAK diaktifkan, SKU di sini) --}}
+                                                <template x-if="!c.showPrice">
+                                                    <div class="font-mono font-bold text-indigo-700 border-t border-gray-300 pt-1"
+                                                        style="font-size: 9pt;" x-text="slot.item.sku">
+                                                    </div>
+                                                </template>
                                             </div>
                                         </div>
-
-                                        <!-- Barcode Container (Bottom) -->
-                                        <div class="w-full flex items-center justify-center overflow-hidden"
-                                            style="padding-left: 1mm; padding-right: 1mm;">
-                                            <svg class="barcode-svg" x-init="renderBarcode($el, slot.item.sku)"></svg>
-                                        </div>
-                                    </div>
                                 </template>
 
                                 {{-- Jika Slot Di-Skip / Dilewati (Tampilkan X merah) --}}
@@ -373,12 +378,12 @@
                     rounded: 1,                  // Rounded border label
                     col: 3, row: 4,              // Grid Kolom x Baris
                     gapX: 2, gapY: 1,            // Jarak antar label
-                    marginLeft: 4, marginTop: 7  // Margin luar kertas
+                    marginLeft: 4, marginTop: 7, // Margin luar kertas
+                    showPrice: false             // Tampilkan harga atau tidak
                 },
 
                 items: rawItems,
                 skippedSlots: [], // Menyimpan ID slot kertas mana saja yang di-skip (tidak diprint)
-                selectedPrinter: localStorage.getItem('label_printer_target') || 'browser',
 
                 // Nilai default untuk reset
                 defaults: {
@@ -387,7 +392,16 @@
                     rounded: 1,
                     col: 3, row: 4,
                     gapX: 2, gapY: 1,
-                    marginLeft: 4, marginTop: 7
+                    marginLeft: 4, marginTop: 7,
+                    showPrice: false
+                },
+
+                formatCurrency(val) {
+                    return new Intl.NumberFormat('id-ID', {
+                        style: 'currency',
+                        currency: 'IDR',
+                        minimumFractionDigits: 0
+                    }).format(val);
                 },
 
                 // Getter untuk meratakan (flatten) items berdasarkan jumlah copies
@@ -474,25 +488,38 @@
                     return pages;
                 },
 
-                // Render Barcode
-                renderBarcode(el, sku) {
-                    // Gunakan setTimeout agar SVG sudah di-render DOM sebelum JSBarcode memanggilnya
+                // Render QR Code
+                renderQRCode(el, sku) {
                     setTimeout(() => {
-                        if (sku) {
-                            JsBarcode(el, sku, {
-                                format: 'CODE128',
-                                width: 1.4,
-                                height: 25,
-                                displayValue: true,
-                                fontSize: 9,
-                                textMargin: 0,
-                                margin: 0
+                        if (sku && typeof QRCode !== 'undefined') {
+                            el.innerHTML = "";
+                            new QRCode(el, {
+                                text: sku,
+                                width: 80,
+                                height: 80,
+                                colorDark: "#000000",
+                                colorLight: "#ffffff",
+                                correctLevel: QRCode.CorrectLevel.M
                             });
+
+                            // Opsional: Pastikan canvas/img di dalam QRCode responsive
+                            const img = el.querySelector('img');
+                            if (img) {
+                                img.style.maxWidth = '100%';
+                                img.style.height = 'auto';
+                            }
+                            const canvas = el.querySelector('canvas');
+                            if (canvas) {
+                                canvas.style.maxWidth = '100%';
+                                canvas.style.height = 'auto';
+                            }
                         }
                     }, 10);
                 }
             }
         }
+    </script>
+
     </script>
 </body>
 
