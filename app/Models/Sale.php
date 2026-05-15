@@ -12,6 +12,8 @@ class Sale extends Model
         'sale_no', 'cash_session_id', 'store_id', 'payment_method_id',
         'subtotal', 'discount_amount', 'total_amount',
         'amount_paid', 'change_amount', 'notes', 'created_by',
+        'customer_name', 'customer_phone',
+        'price_method', 'payment_status', 'dp_amount',
     ];
 
     protected $casts = [
@@ -20,6 +22,7 @@ class Sale extends Model
         'total_amount'    => 'decimal:2',
         'amount_paid'     => 'decimal:2',
         'change_amount'   => 'decimal:2',
+        'dp_amount'       => 'decimal:2',
     ];
 
     public function cashSession(): BelongsTo   { return $this->belongsTo(CashSession::class); }

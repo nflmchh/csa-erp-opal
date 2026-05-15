@@ -100,6 +100,7 @@ class ProductController extends Controller
             'description'     => 'nullable|string',
             'base_price'      => 'required|numeric|min:0',
             'sell_price'      => 'required|numeric|min:0',
+            'retail_price'    => 'required|numeric|min:0',
             'is_active'       => 'boolean',
             'images'          => 'nullable|array',
             'images.*'        => 'image|max:10240',
@@ -120,6 +121,7 @@ class ProductController extends Controller
                 'description'     => $data['description'] ?? null,
                 'base_price'      => $data['base_price'],
                 'sell_price'      => $data['sell_price'],
+                'retail_price'    => $data['retail_price'],
                 'is_active'       => $request->boolean('is_active', true),
                 'created_by'      => Auth::id(),
             ]);
@@ -195,6 +197,7 @@ class ProductController extends Controller
             'description'     => 'nullable|string',
             'base_price'      => 'required|numeric|min:0',
             'sell_price'      => 'required|numeric|min:0',
+            'retail_price'    => 'required|numeric|min:0',
             'images'          => 'nullable|array',
             'images.*'        => 'image|max:10240',
             'primary_image'   => 'nullable|integer',
@@ -213,6 +216,7 @@ class ProductController extends Controller
                 'description'     => $data['description'] ?? null,
                 'base_price'      => $data['base_price'],
                 'sell_price'      => $data['sell_price'],
+                'retail_price'    => $data['retail_price'],
                 'is_active'       => $request->boolean('is_active'),
             ]);
 

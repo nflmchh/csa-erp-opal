@@ -14,13 +14,14 @@ class Product extends Model
     protected $fillable = [
         'brand_id', 'category_id', 'product_type_id',
         'name', 'model_code', 'description',
-        'base_price', 'sell_price', 'is_active', 'created_by','reward_store',
+        'base_price', 'sell_price', 'retail_price', 'is_active', 'created_by','reward_store',
         'reward_owner',
     ];
 
     protected $casts = [
         'base_price' => 'decimal:2',
         'sell_price' => 'decimal:2',
+        'retail_price' => 'decimal:2',
         'is_active'  => 'boolean',
     ];
 

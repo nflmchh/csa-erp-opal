@@ -149,6 +149,7 @@ Route::middleware(['auth', 'active.user'])->group(function () {
         Route::get('/history', [App\Http\Controllers\POS\POSController::class, 'history'])->name('history');
         Route::get('/search-product', [App\Http\Controllers\POS\POSController::class, 'searchProduct'])->name('search-product');
         Route::get('/report/export', [App\Http\Controllers\POS\POSController::class, 'exportReport'])->name('report.export');
+        Route::get('/customers/autocomplete', [App\Http\Controllers\POS\POSController::class, 'autocompleteCustomer'])->name('customers.autocomplete');
     });
 
     // Returns

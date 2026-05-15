@@ -56,7 +56,16 @@
                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4" x-data="{ 
+            sellPrice: '{{ old('sell_price', (int)$product->sell_price) }}', 
+            retailPrice: '{{ old('retail_price', (int)$product->retail_price) }}',
+            updateRetailPrice() {
+                if (!this.retailPrice) {
+                    let numSell = parseInt(this.sellPrice.replace(/\D/g, '')) || 0;
+                    this.retailPrice = new Intl.NumberFormat('id-ID').format(numSell + 10000);
+                }
+            }
+        }">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Harga Modal <span class="text-red-500">*</span></label>
                 <div class="relative">
@@ -66,10 +75,20 @@
                 </div>
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Harga Jual <span class="text-red-500">*</span></label>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Harga Jual (Sistem) <span class="text-red-500">*</span></label>
                 <div class="relative">
                     <span class="absolute left-3 top-2.5 text-sm text-gray-400">Rp</span>
                     <input type="text" inputmode="numeric" name="sell_price" value="{{ old('sell_price', (int)$product->sell_price) }}" required
+                        x-model="sellPrice" @input="updateRetailPrice"
+                        class="input-currency w-full border border-gray-300 rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Harga Ecer <span class="text-red-500">*</span></label>
+                <div class="relative">
+                    <span class="absolute left-3 top-2.5 text-sm text-gray-400">Rp</span>
+                    <input type="text" inputmode="numeric" name="retail_price" value="{{ old('retail_price', (int)$product->retail_price) }}" required
+                        x-model="retailPrice"
                         class="input-currency w-full border border-gray-300 rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
                 </div>
             </div>

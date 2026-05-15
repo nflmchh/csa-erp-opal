@@ -54,6 +54,20 @@
     <div class="row"><span>Tgl</span><span>{{ $sale->created_at->format('d/m/Y H:i') }}</span></div>
     <div class="row"><span>Kasir</span><span>{{ $sale->creator?->name }}</span></div>
     <div class="row"><span>Metode</span><span>{{ strtoupper($sale->paymentMethod?->name) }}</span></div>
+    @php
+        $priceLabels = ['system' => 'Ecer', 'grosir' => 'Grosir', 'custom' => 'Ecer (Custom)'];
+        $priceLabel  = $priceLabels[$sale->price_method ?? 'system'] ?? 'Ecer';
+        $statusLabel = ($sale->payment_status === 'tempo') ? 'TEMPO / DP / PO' : 'LUNAS';
+    @endphp
+    <div class="row"><span>Harga</span><span>{{ $priceLabel }}</span></div>
+    <div class="row bold" style="color: {{ $sale->payment_status === 'tempo' ? '#dc2626' : '#16a34a' }}"><span>Status</span><span>{{ $statusLabel }}</span></div>
+    @if($sale->customer_name)
+    <div class="divider" style="margin: 6px 0;"></div>
+    <div class="row"><span>Pelanggan</span><span class="bold">{{ $sale->customer_name }}</span></div>
+    @if($sale->customer_phone)
+    <div class="row"><span>Telp</span><span>{{ $sale->customer_phone }}</span></div>
+    @endif
+    @endif
 
     <div class="divider"></div>
 
@@ -89,7 +103,10 @@
         <span>TOTAL</span>
         <span>Rp {{ number_format($sale->total_amount, 0, ',', '.') }}</span>
     </div>
-    <div class="row" style="margin-top:8px"><span>Bayar</span><span>{{ number_format($sale->amount_paid, 0, ',', '.') }}</span></div>
+    <div class="row" style="margin-top:8px"><span>Bayar ({{ $sale->payment_status === 'tempo' ? 'DP' : 'Tunai' }})</span><span>{{ number_format($sale->amount_paid, 0, ',', '.') }}</span></div>
+    @if($sale->payment_status === 'tempo')
+    <div class="row bold" style="color:#dc2626"><span>Sisa Hutang</span><span>{{ number_format(max(0,$sale->total_amount - $sale->amount_paid), 0, ',', '.') }}</span></div>
+    @endif
     @if($sale->change_amount > 0)
     <div class="row bold"><span>Kembalian</span><span>{{ number_format($sale->change_amount, 0, ',', '.') }}</span></div>
     @endif

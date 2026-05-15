@@ -50,13 +50,15 @@ class POSController extends Controller
                 $imageUrl = $image ? asset('storage/' . $image->path) : 'https://via.placeholder.com/300x300.png?text=No+Image';
 
                 return [
-                    'id' => $v->id,
-                    'sku' => $v->sku,
-                    'name' => $v->product->name . ' · ' . $v->color->name . ' / ' . $v->size->name,
-                    'price' => $v->sellPrice(),
+                    'id'              => $v->id,
+                    'sku'             => $v->sku,
+                    'name'            => $v->product->name . ' · ' . $v->color->name . ' / ' . $v->size->name,
+                    'price'           => $v->sellPrice(),
                     'price_formatted' => 'Rp ' . number_format($v->sellPrice(), 0, ',', '.'),
-                    'stock' => $stock,
-                    'image' => $imageUrl, // <- Variabel gambar dikirim ke tampilan
+                    'grosir_price'    => (float) $v->product->base_price,
+                    'retail_price'    => (float) ($v->product->retail_price ?? $v->sellPrice()),
+                    'stock'           => $stock,
+                    'image'           => $imageUrl,
                 ];
             });
 
@@ -129,12 +131,16 @@ class POSController extends Controller
 
         $r->validate([
             'payment_method_id' => 'required|exists:payment_methods,id',
-            'amount_paid' => 'required|numeric|min:0',
-            'discount_amount' => 'nullable|numeric|min:0',
-            'notes' => 'nullable|string|max:300',
-            'items' => 'required|array|min:1',
+            'amount_paid'       => 'required|numeric|min:0',
+            'discount_amount'   => 'nullable|numeric|min:0',
+            'notes'             => 'nullable|string|max:300',
+            'customer_name'     => 'nullable|string|max:150',
+            'customer_phone'    => 'nullable|string|max:30',
+            'payment_status'    => 'nullable|in:lunas,tempo',
+            'dp_amount'         => 'nullable|numeric|min:0',
+            'items'             => 'required|array|min:1',
             'items.*.variant_id' => 'required|exists:product_variants,id',
-            'items.*.qty' => 'required|integer|min:1',
+            'items.*.qty'       => 'required|integer|min:1',
             'items.*.unit_price' => 'required|numeric|min:0',
         ]);
 
@@ -169,25 +175,31 @@ class POSController extends Controller
                 }
 
                 $totalAmount = max(0, $subtotal - $discountAmount);
-                $amountPaid = (float) $r->amount_paid;
+                $amountPaid  = (float) $r->amount_paid;
+                $paymentStatus = $r->input('payment_status', 'lunas');
+                $dpAmount    = (float) ($r->dp_amount ?? 0);
                 $changeAmount = max(0, $amountPaid - $totalAmount);
 
-                if ($amountPaid < $totalAmount) {
+                if ($paymentStatus === 'lunas' && $amountPaid < $totalAmount) {
                     throw new \RuntimeException("Jumlah pembayaran kurang dari total transaksi.");
                 }
 
                 $sale = Sale::create([
-                    'sale_no' => ReferenceNumberService::sale(),
-                    'cash_session_id' => $session->id,
-                    'store_id' => $session->store_id,
+                    'sale_no'           => ReferenceNumberService::sale(),
+                    'cash_session_id'   => $session->id,
+                    'store_id'          => $session->store_id,
                     'payment_method_id' => $r->payment_method_id,
-                    'subtotal' => $subtotal,
-                    'discount_amount' => $discountAmount,
-                    'total_amount' => $totalAmount,
-                    'amount_paid' => $amountPaid,
-                    'change_amount' => $changeAmount,
-                    'notes' => $r->notes,
-                    'created_by' => Auth::id(),
+                    'subtotal'          => $subtotal,
+                    'discount_amount'   => $discountAmount,
+                    'total_amount'      => $totalAmount,
+                    'amount_paid'       => $amountPaid,
+                    'change_amount'     => $changeAmount,
+                    'notes'             => $r->notes,
+                    'customer_name'     => $r->customer_name,
+                    'customer_phone'    => $r->customer_phone,
+                    'payment_status'    => $paymentStatus,
+                    'dp_amount'         => $dpAmount,
+                    'created_by'        => Auth::id(),
                 ]);
 
                 foreach ($itemsData as $item) {
@@ -318,6 +330,8 @@ class POSController extends Controller
                     'name' => $v->product->name . ' · ' . $v->color->name . ' / ' . $v->size->name,
                     'price' => $v->sellPrice(),
                     'price_formatted' => 'Rp ' . number_format($v->sellPrice(), 0, ',', '.'),
+                    'grosir_price' => (float) $v->product->base_price,
+                    'retail_price' => (float) ($v->product->retail_price ?? $v->sellPrice()),
                     'stock' => $stock,
                 ];
             });
@@ -329,8 +343,37 @@ class POSController extends Controller
     {
         return response()->json(['status' => 'ok']);
     }
+
     public function poll()
     {
         return response()->json(['ok' => true]);
+    }
+
+    /**
+     * Autocomplete pelanggan berdasarkan nama atau telepon dari riwayat transaksi.
+     */
+    public function autocompleteCustomer(Request $r)
+    {
+        $term = trim($r->q ?? '');
+        if (strlen($term) < 2) {
+            return response()->json([]);
+        }
+
+        $results = Sale::whereNotNull('customer_name')
+            ->where(function ($q) use ($term) {
+                $q->where('customer_name', 'like', "%{$term}%")
+                  ->orWhere('customer_phone', 'like', "%{$term}%");
+            })
+            ->select('customer_name', 'customer_phone')
+            ->distinct()
+            ->orderBy('customer_name')
+            ->limit(8)
+            ->get()
+            ->map(fn($s) => [
+                'name'  => $s->customer_name,
+                'phone' => $s->customer_phone ?? '',
+            ]);
+
+        return response()->json($results);
     }
 }
