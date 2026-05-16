@@ -292,33 +292,67 @@ function posHistoryApp() {
             let rows = sale.items.map(item => {
                 const name = item.variant?.product?.name || '-';
                 const sku  = item.variant?.sku || '';
-                return `<div style="margin-bottom:6px">
-                    <div style="font-weight:bold">${name}</div>
-                    <div style="font-size:11px;color:#555">${sku}</div>
+                const color = item.variant?.color?.name || '';
+                const size = item.variant?.size?.name || '';
+                return `<div style="margin-bottom:8px">
+                    <div style="font-weight:bold;font-size:13px">${name}</div>
+                    <div style="font-size:11px;color:#444;margin-bottom:2px;">${sku} · ${color} / ${size}</div>
                     <div style="display:flex;justify-content:space-between">
-                        <span>@ ${fmt(item.unit_price)} x${item.qty}</span>
-                        <span style="font-weight:bold">Rp ${fmt(item.subtotal)}</span>
+                        <span style="font-size:12px">@ ${fmt(item.unit_price)}</span>
+                        <span style="width:40px;text-align:center;">x${item.qty}</span>
+                        <span style="font-weight:bold;width:85px;text-align:right;">${fmt(item.subtotal)}</span>
                     </div>
                 </div>`;
             }).join('');
-            return `<div style="font-family:monospace;font-size:13px;width:72mm;margin:0 auto;padding:12px">
-                <div style="text-align:center;font-weight:bold;font-size:16px;margin-bottom:4px">SevenKey ERP</div>
-                <div style="text-align:center;font-weight:bold">${sale.store?.name || ''}</div>
-                <hr style="border-top:1px dashed #000;margin:8px 0">
-                <div style="display:flex;justify-content:space-between"><span>No.</span><span><b>${sale.sale_no}</b></span></div>
-                <div style="display:flex;justify-content:space-between"><span>Tgl</span><span>${(sale.created_at||'').substring(0,16).replace('T',' ')}</span></div>
-                <div style="display:flex;justify-content:space-between"><span>Kasir</span><span>${sale.creator?.name||'-'}</span></div>
-                <hr style="border-top:1px dashed #000;margin:8px 0">
+            
+            let pMethod = sale.payment_method || sale.paymentMethod;
+            let pMethodName = pMethod ? pMethod.name.toUpperCase() : '-';
+            let priceLabel = sale.price_method === 'custom' ? 'Ecer (Custom)' : (sale.price_method === 'grosir' ? 'Grosir' : 'Ecer');
+            let statusLabel = (sale.payment_status === 'tempo') ? 'TEMPO / DP / PO' : 'LUNAS';
+            let statusColor = (sale.payment_status === 'tempo') ? '#dc2626' : '#16a34a';
+
+            let customerHtml = '';
+            if (sale.customer_name) {
+                customerHtml += `<div style="border-top:1px dashed #000;margin:6px 0"></div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span>Pelanggan</span><span style="font-weight:bold">${sale.customer_name}</span></div>`;
+                if (sale.customer_phone) {
+                    customerHtml += `<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span>Telp</span><span>${sale.customer_phone}</span></div>`;
+                }
+            }
+
+            return `<div style="font-family:'Courier New', monospace;font-size:13px;width:72mm;margin:0 auto;padding:12px;color:#000;background:#fff;">
+                <div style="text-align:center;font-weight:bold;font-size:16px;margin-bottom:2px;text-transform:uppercase;">${sale.store?.name || ''}</div>
+                <div style="text-align:center;font-size:9px;color:#666;margin-bottom:4px">SevenKey erp</div>
+                ${sale.store?.address ? `<div style="text-align:center;font-size:11px;color:#444">${sale.store.address}</div>` : ''}
+                <div style="border-top:1px dashed #000;margin:10px 0"></div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span>No.</span><span style="font-weight:bold">${sale.sale_no}</span></div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span>Tgl</span><span>${(sale.created_at||'').substring(0,16).replace('T',' ')}</span></div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span>Kasir</span><span>${sale.creator?.name||'-'}</span></div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span>Metode</span><span>${pMethodName}</span></div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span>Harga</span><span>${priceLabel}</span></div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:4px;color:${statusColor};font-weight:bold"><span>Status</span><span>${statusLabel}</span></div>
+                ${customerHtml}
+                <div style="border-top:1px dashed #000;margin:10px 0"></div>
+                <div style="margin-bottom:6px">
+                    <div style="display:flex;justify-content:space-between;font-weight:bold;font-size:12px;text-transform:uppercase;">
+                        <span style="flex:1;padding-right:8px;">Item</span>
+                        <span style="width:40px;text-align:center;">Qty</span>
+                        <span style="width:85px;text-align:right;">Total</span>
+                    </div>
+                </div>
+                <div style="border-top:1px solid #000;margin:10px 0"></div>
                 ${rows}
-                <hr style="border-top:1px solid #000;margin:8px 0">
-                <div style="display:flex;justify-content:space-between"><span>Subtotal</span><span>Rp ${fmt(sale.subtotal)}</span></div>
-                ${sale.discount_amount > 0 ? `<div style="display:flex;justify-content:space-between"><span>Diskon</span><span>-Rp ${fmt(sale.discount_amount)}</span></div>` : ''}
-                <div style="display:flex;justify-content:space-between;font-weight:bold;font-size:15px;margin-top:6px"><span>TOTAL</span><span>Rp ${fmt(sale.total_amount)}</span></div>
-                <div style="display:flex;justify-content:space-between;margin-top:4px"><span>Bayar</span><span>Rp ${fmt(sale.amount_paid)}</span></div>
-                ${sale.change_amount > 0 ? `<div style="display:flex;justify-content:space-between;font-weight:bold"><span>Kembalian</span><span>Rp ${fmt(sale.change_amount)}</span></div>` : ''}
-                <hr style="border-top:1px dashed #000;margin:8px 0">
-                <div style="text-align:center;font-size:12px;font-weight:bold;margin-top:10px">TERIMA KASIH ATAS KUNJUNGAN ANDA</div>
-                <div style="height:2cm"></div>
+                <div style="border-top:1px solid #000;margin:10px 0"></div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span>Subtotal</span><span>${fmt(sale.subtotal)}</span></div>
+                ${sale.discount_amount > 0 ? `<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span>Diskon</span><span>-${fmt(sale.discount_amount)}</span></div>` : ''}
+                <div style="display:flex;justify-content:space-between;font-weight:bold;font-size:15px;margin-top:8px"><span>TOTAL</span><span>Rp ${fmt(sale.total_amount)}</span></div>
+                <div style="display:flex;justify-content:space-between;margin-top:8px"><span>Bayar (${sale.payment_status === 'tempo' ? 'DP' : 'Tunai'})</span><span>${fmt(sale.amount_paid)}</span></div>
+                ${sale.payment_status === 'tempo' ? `<div style="display:flex;justify-content:space-between;font-weight:bold;color:#dc2626;margin-bottom:4px"><span>Sisa Hutang</span><span>${fmt(Math.max(0, sale.total_amount - sale.amount_paid))}</span></div>` : ''}
+                ${sale.change_amount > 0 ? `<div style="display:flex;justify-content:space-between;font-weight:bold;margin-bottom:4px"><span>Kembalian</span><span>${fmt(sale.change_amount)}</span></div>` : ''}
+                <div style="border-top:1px dashed #000;margin:10px 0"></div>
+                <div style="text-align:center;font-size:12px;font-weight:bold;margin-top:16px">TERIMA KASIH TELAH BERBELANJA</div>
+                <div style="text-align:center;font-size:10px;margin-top:4px">Silahkan bawa struk ini untuk retur barang</div>
+                <div style="height:2.5cm"></div>
             </div>`;
         },
 
@@ -392,30 +426,63 @@ function posHistoryApp() {
 
                     let sale = this.currentSaleData;
                     let text = "\n"; 
-                    text += alignC("SEVENKEY ERP");
-                    text += alignC(sale.store.name);
+                    text += alignC(sale.store.name.toUpperCase());
+                    text += alignC("SevenKey erp");
+                    if (sale.store.address) {
+                        text += alignC(sale.store.address);
+                    }
                     text += "------------------------------------------------\n";
                     text += alignLR("No:", sale.sale_no);
                     text += alignLR("Tgl:", sale.created_at.substring(0, 16).replace('T', ' '));
                     text += alignLR("Kasir:", sale.creator ? sale.creator.name.substring(0, 15) : '-');
+
+                    let pMethod = sale.payment_method || sale.paymentMethod;
+                    text += alignLR("Metode:", pMethod ? pMethod.name.toUpperCase() : '-');
+                    
+                    let priceLabel = sale.price_method === 'custom' ? 'Ecer (Custom)' : (sale.price_method === 'grosir' ? 'Grosir' : 'Ecer');
+                    text += alignLR("Harga:", priceLabel);
+                    
+                    let statusLabel = (sale.payment_status === 'tempo') ? 'TEMPO / DP / PO' : 'LUNAS';
+                    text += alignLR("Status:", statusLabel);
+
+                    if (sale.customer_name) {
+                        text += "------------------------------------------------\n";
+                        text += alignLR("Pelanggan:", sale.customer_name);
+                        if (sale.customer_phone) {
+                            text += alignLR("Telp:", sale.customer_phone);
+                        }
+                    }
+
+                    text += "------------------------------------------------\n";
+                    text += alignLR("Item             Qty", "Total");
                     text += "------------------------------------------------\n";
                     
                     sale.items.forEach(item => {
                         text += String(item.variant.product.name).substring(0, 48) + "\n";
-                        let priceQty = item.qty + " x " + parseInt(item.unit_price).toLocaleString('id-ID');
-                        let totalStr = "Rp " + parseInt(item.subtotal).toLocaleString('id-ID');
+                        let skuText = item.variant.sku + " · " + (item.variant.color ? item.variant.color.name : '') + " / " + (item.variant.size ? item.variant.size.name : '');
+                        text += String(skuText).substring(0, 48) + "\n";
+                        let priceQty = "@ " + parseInt(item.unit_price).toLocaleString('id-ID') + " x" + item.qty;
+                        let totalStr = parseInt(item.subtotal).toLocaleString('id-ID');
                         text += alignLR(priceQty, totalStr);
                     });
                     
                     text += "------------------------------------------------\n";
-                    text += alignLR("Subtotal", "Rp " + parseInt(sale.subtotal).toLocaleString('id-ID'));
+                    text += alignLR("Subtotal", parseInt(sale.subtotal).toLocaleString('id-ID'));
                     if (sale.discount_amount > 0) {
-                        text += alignLR("Diskon", "-Rp " + parseInt(sale.discount_amount).toLocaleString('id-ID'));
+                        text += alignLR("Diskon", "- " + parseInt(sale.discount_amount).toLocaleString('id-ID'));
                     }
                     text += alignLR("TOTAL", "Rp " + parseInt(sale.total_amount).toLocaleString('id-ID'));
-                    text += alignLR("Bayar", "Rp " + parseInt(sale.amount_paid).toLocaleString('id-ID'));
+                    
+                    let bayarLabel = (sale.payment_status === 'tempo') ? 'Bayar (DP)' : 'Bayar (Tunai)';
+                    text += alignLR(bayarLabel, parseInt(sale.amount_paid).toLocaleString('id-ID'));
+                    
+                    if (sale.payment_status === 'tempo') {
+                        let sisa = Math.max(0, sale.total_amount - sale.amount_paid);
+                        text += alignLR("Sisa Hutang", parseInt(sisa).toLocaleString('id-ID'));
+                    }
+
                     if (sale.change_amount > 0) {
-                        text += alignLR("Kembali", "Rp " + parseInt(sale.change_amount).toLocaleString('id-ID'));
+                        text += alignLR("Kembalian", parseInt(sale.change_amount).toLocaleString('id-ID'));
                     }
                     text += "------------------------------------------------\n";
                     
@@ -455,7 +522,7 @@ function posHistoryApp() {
                         0x0A, 0x0A
                     ]);
 
-                    const thanksBytes = encoder.encode(alignC("TERIMA KASIH ATAS KUNJUNGAN ANDA"));
+                    const thanksBytes = encoder.encode(alignC("TERIMA KASIH TELAH BERBELANJA") + alignC("Silahkan bawa struk ini untuk retur barang", 48));
                     const feed = new Uint8Array([0x1B, 0x64, 0x05]); 
 
                     const payload = new Uint8Array(init.length + contentBytes.length + qrCmds.length + barcodeCmds.length + thanksBytes.length + feed.length);

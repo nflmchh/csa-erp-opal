@@ -904,30 +904,63 @@
 
                             let sale = this.currentSaleData;
                             let text = "\n";
-                            text += alignC("SEVENKEY ERP");
-                            text += alignC(sale.store.name);
+                            text += alignC(sale.store.name.toUpperCase());
+                            text += alignC("SevenKey erp");
+                            if (sale.store.address) {
+                                text += alignC(sale.store.address);
+                            }
                             text += "------------------------------------------------\n";
                             text += alignLR("No:", sale.sale_no);
                             text += alignLR("Tgl:", sale.created_at.substring(0, 16).replace('T', ' '));
                             text += alignLR("Kasir:", sale.creator ? sale.creator.name.substring(0, 15) : '-');
+                            
+                            let pMethod = sale.payment_method || sale.paymentMethod;
+                            text += alignLR("Metode:", pMethod ? pMethod.name.toUpperCase() : '-');
+                            
+                            let priceLabel = sale.price_method === 'custom' ? 'Ecer (Custom)' : (sale.price_method === 'grosir' ? 'Grosir' : 'Ecer');
+                            text += alignLR("Harga:", priceLabel);
+                            
+                            let statusLabel = (sale.payment_status === 'tempo') ? 'TEMPO / DP / PO' : 'LUNAS';
+                            text += alignLR("Status:", statusLabel);
+
+                            if (sale.customer_name) {
+                                text += "------------------------------------------------\n";
+                                text += alignLR("Pelanggan:", sale.customer_name);
+                                if (sale.customer_phone) {
+                                    text += alignLR("Telp:", sale.customer_phone);
+                                }
+                            }
+
+                            text += "------------------------------------------------\n";
+                            text += alignLR("Item             Qty", "Total");
                             text += "------------------------------------------------\n";
 
                             sale.items.forEach(item => {
                                 text += String(item.variant.product.name).substring(0, 48) + "\n";
-                                let priceQty = item.qty + " x " + parseInt(item.unit_price).toLocaleString('id-ID');
-                                let totalStr = "Rp " + parseInt(item.subtotal).toLocaleString('id-ID');
+                                let skuText = item.variant.sku + " · " + (item.variant.color ? item.variant.color.name : '') + " / " + (item.variant.size ? item.variant.size.name : '');
+                                text += String(skuText).substring(0, 48) + "\n";
+                                let priceQty = "@ " + parseInt(item.unit_price).toLocaleString('id-ID') + " x" + item.qty;
+                                let totalStr = parseInt(item.subtotal).toLocaleString('id-ID');
                                 text += alignLR(priceQty, totalStr);
                             });
 
                             text += "------------------------------------------------\n";
-                            text += alignLR("Subtotal", "Rp " + parseInt(sale.subtotal).toLocaleString('id-ID'));
+                            text += alignLR("Subtotal", parseInt(sale.subtotal).toLocaleString('id-ID'));
                             if (sale.discount_amount > 0) {
-                                text += alignLR("Diskon", "-Rp " + parseInt(sale.discount_amount).toLocaleString('id-ID'));
+                                text += alignLR("Diskon", "- " + parseInt(sale.discount_amount).toLocaleString('id-ID'));
                             }
                             text += alignLR("TOTAL", "Rp " + parseInt(sale.total_amount).toLocaleString('id-ID'));
-                            text += alignLR("Bayar", "Rp " + parseInt(sale.amount_paid).toLocaleString('id-ID'));
+                            
+                            let bayarLabel = (sale.payment_status === 'tempo') ? 'Bayar (DP)' : 'Bayar (Tunai)';
+                            text += alignLR(bayarLabel, parseInt(sale.amount_paid).toLocaleString('id-ID'));
+                            
+                            if (sale.payment_status === 'tempo') {
+                                let sisa = Math.max(0, sale.total_amount - sale.amount_paid);
+                                text += alignLR("Sisa Hutang", parseInt(sisa).toLocaleString('id-ID'));
+                            }
+
                             if (sale.change_amount > 0) {
-                                text += alignLR("Kembali", "Rp " + parseInt(sale.change_amount).toLocaleString('id-ID'));
+                                text += alignLR("Kembalian", parseInt(sale.change_amount).toLocaleString('id-ID'));
                             }
                             text += "------------------------------------------------\n";
 
@@ -969,7 +1002,7 @@
                                 0x0A, 0x0A
                             ]);
 
-                            const thanksBytes = encoder.encode(alignC("TERIMA KASIH ATAS KUNJUNGAN ANDA"));
+                            const thanksBytes = encoder.encode(alignC("TERIMA KASIH TELAH BERBELANJA") + alignC("Silahkan bawa struk ini untuk retur barang", 48));
                             const feed = new Uint8Array([0x1B, 0x64, 0x05]);
 
                             // Combine all payloads
