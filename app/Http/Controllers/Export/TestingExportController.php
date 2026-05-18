@@ -159,7 +159,7 @@ class TestingExportController extends Controller
 
         // Kirim dengan header HTTP eksplisit agar Bluefy mengenali format-nya
         return response()
-            ->download($fullPath, $filename, [
+            ->download($fullPath, null, [
                 'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
                 'Content-Disposition' => 'attachment; filename="' . $filename . '"',
                 'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',

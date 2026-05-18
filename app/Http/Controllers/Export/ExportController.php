@@ -736,7 +736,8 @@ class ExportController extends Controller
 
         $fileSize = filesize($fullPath);
 
-        return response()->download($fullPath, $filename, [
+        // Pass 'null' for filename to prevent Symfony/Laravel from appending the problematic filename*=utf-8 header
+        return response()->download($fullPath, null, [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             'Content-Disposition' => 'attachment; filename="' . $filename . '"',
             'Content-Length' => $fileSize,
@@ -753,9 +754,10 @@ class ExportController extends Controller
     {
         $content = $pdf->output();
         
+        // Pass 'null' for filename to bypass auto-formatting
         return response()->streamDownload(function () use ($content) {
             echo $content;
-        }, $filename, [
+        }, null, [
             'Content-Type' => 'application/pdf',
             'Content-Disposition' => 'attachment; filename="' . $filename . '"',
             'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',

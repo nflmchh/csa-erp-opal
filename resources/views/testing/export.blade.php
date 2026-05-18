@@ -342,6 +342,7 @@
                 <!-- CSV — paling kompatibel -->
                 <a id="btn-csv"
                    href="{{ route('testing.sales.csv', ['store_id' => $storeId, 'date_from' => $dateFrom, 'date_to' => $dateTo]) }}"
+                   download="laporan-penjualan.csv"
                    class="export-btn csv"
                    onclick="logDownload('CSV', this.href)">
                     <div class="export-btn-icon">📄</div>
@@ -354,6 +355,7 @@
                 <!-- Excel — mungkin bermasalah di Bluefy -->
                 <a id="btn-xlsx"
                    href="{{ route('testing.sales.excel', ['store_id' => $storeId, 'date_from' => $dateFrom, 'date_to' => $dateTo]) }}"
+                   download="laporan-penjualan.xlsx"
                    class="export-btn xlsx"
                    onclick="logDownload('Excel (.xlsx)', this.href)">
                     <div class="export-btn-icon">📊</div>
