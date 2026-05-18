@@ -341,7 +341,7 @@
             <div class="export-grid" id="export-buttons">
                 <!-- CSV — paling kompatibel -->
                 <a id="btn-csv"
-                   href="{{ route('testing.sales.csv', ['store_id' => $storeId, 'date_from' => $dateFrom, 'date_to' => $dateTo]) }}"
+                   href="{{ route('testing.sales.csv', ['store_id' => $storeId, 'date_from' => $dateFrom, 'date_to' => $dateTo, 'filename' => 'laporan-penjualan-' . now()->format('Ymd-His') . '.csv']) }}"
                    download="laporan-penjualan.csv"
                    class="export-btn csv"
                    onclick="logDownload('CSV', this.href)">
@@ -354,7 +354,7 @@
 
                 <!-- Excel — mungkin bermasalah di Bluefy -->
                 <a id="btn-xlsx"
-                   href="{{ route('testing.sales.excel', ['store_id' => $storeId, 'date_from' => $dateFrom, 'date_to' => $dateTo]) }}"
+                   href="{{ route('testing.sales.excel', ['store_id' => $storeId, 'date_from' => $dateFrom, 'date_to' => $dateTo, 'filename' => 'laporan-penjualan-' . now()->format('Ymd-His') . '.xlsx']) }}"
                    download="laporan-penjualan.xlsx"
                    class="export-btn xlsx"
                    onclick="logDownload('Excel (.xlsx)', this.href)">
@@ -484,8 +484,9 @@
         if (dateFrom) baseParams += '&date_from=' + encodeURIComponent(dateFrom);
         if (dateTo)   baseParams += '&date_to='   + encodeURIComponent(dateTo);
 
-        var csvBase  = '{{ route("testing.sales.csv") }}';
-        var xlsxBase = '{{ route("testing.sales.excel") }}';
+        var timestamp = new Date().toISOString().replace(/[-:T]/g, '').substring(0, 14); // e.g. 20260518130831
+        var csvBase  = '{{ route("testing.sales.csv") }}' + '/laporan-penjualan-' + timestamp + '.csv';
+        var xlsxBase = '{{ route("testing.sales.excel") }}' + '/laporan-penjualan-' + timestamp + '.xlsx';
 
         document.getElementById('btn-csv').href  = csvBase  + '?' + baseParams.substring(1);
         document.getElementById('btn-xlsx').href = xlsxBase + '?' + baseParams.substring(1);

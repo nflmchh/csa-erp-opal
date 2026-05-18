@@ -29,7 +29,7 @@ class ExportController extends Controller
     // LAPORAN PENJUALAN
     // ─────────────────────────────────────────────────────────────
 
-    public function salesPdf(Request $request)
+    public function salesPdf(Request $request, $filename = null)
     {
         $this->authorize('export report');
 
@@ -65,20 +65,20 @@ class ExportController extends Controller
         $pdf = Pdf::loadView('exports.pdf.sales', compact('sales', 'totalSales', 'totalOrders', 'store', 'request'))
             ->setPaper('a4', 'landscape');
 
-        return $this->downloadPdfSecure($pdf, 'laporan-penjualan-' . now()->format('Ymd-His') . '.pdf');
+        return $this->downloadPdfSecure($pdf, $filename ?? ('laporan-penjualan-' . now()->format('Ymd-His') . '.pdf'));
     }
 
-    public function salesExcel(Request $request)
+    public function salesExcel(Request $request, $filename = null)
     {
         $this->authorize('export report');
 
         $export = new SalesExport($request->store_id, $request->date_from, $request->date_to);
-        $filename = 'laporan-penjualan-' . now()->format('Ymd-His') . '.xlsx';
+        $filename = $filename ?? ('laporan-penjualan-' . now()->format('Ymd-His') . '.xlsx');
 
         return $this->downloadExcelSecure($export, $filename);
     }
 
-    public function salesCsv(Request $request)
+    public function salesCsv(Request $request, $filename = null)
     {
         $this->authorize('export report');
 
@@ -106,7 +106,7 @@ class ExportController extends Controller
         }
 
         $sales = $query->orderBy('created_at', 'desc')->get();
-        $filename = 'laporan-penjualan-' . now()->format('Ymd-His') . '.csv';
+        $filename = $filename ?? ('laporan-penjualan-' . now()->format('Ymd-His') . '.csv');
 
         // Header yang kompatibel dengan Bluefy (iOS WebKit)
         $headers = [
@@ -181,7 +181,7 @@ class ExportController extends Controller
     // LAPORAN STOK
     // ─────────────────────────────────────────────────────────────
 
-    public function stockPdf(Request $request)
+    public function stockPdf(Request $request, $filename = null)
     {
         $this->authorize('export report');
         $user = auth()->user();
@@ -255,10 +255,10 @@ class ExportController extends Controller
             'filterSize'
         ))->setPaper('a4', 'portrait');
 
-        return $this->downloadPdfSecure($pdf, 'laporan-stok-' . now()->format('Ymd-His') . '.pdf');
+        return $this->downloadPdfSecure($pdf, $filename ?? ('laporan-stok-' . now()->format('Ymd-His') . '.pdf'));
     }
 
-    public function stockExcel(Request $request)
+    public function stockExcel(Request $request, $filename = null)
     {
         $this->authorize('export report');
         $user = auth()->user();
@@ -287,12 +287,12 @@ class ExportController extends Controller
             $request->color_id ? (int) $request->color_id : null,
             $request->size_id ? (int) $request->size_id : null,
         );
-        $filename = 'laporan-stok-' . now()->format('Ymd-His') . '.xlsx';
+        $filename = $filename ?? ('laporan-stok-' . now()->format('Ymd-His') . '.xlsx');
 
         return $this->downloadExcelSecure($export, $filename);
     }
 
-    public function stockCsv(Request $request)
+    public function stockCsv(Request $request, $filename = null)
     {
         $this->authorize('export report');
         $user = auth()->user();
@@ -324,7 +324,7 @@ class ExportController extends Controller
             ->orderByDesc('qty')
             ->get();
 
-        $filename = 'laporan-stok-' . now()->format('Ymd-His') . '.csv';
+        $filename = $filename ?? ('laporan-stok-' . now()->format('Ymd-His') . '.csv');
         $headers = ['Content-Type' => 'text/csv', 'Content-Disposition' => "attachment; filename=\"{$filename}\""];
 
         $callback = function () use ($stocks) {
@@ -352,7 +352,7 @@ class ExportController extends Controller
     // LAPORAN PENGELUARAN
     // ─────────────────────────────────────────────────────────────
 
-    public function expensesPdf(Request $request)
+    public function expensesPdf(Request $request, $filename = null)
     {
         $this->authorize('export report');
 
@@ -417,10 +417,10 @@ class ExportController extends Controller
             'dateTo'
         ))->setPaper('a4', 'portrait');
 
-        return $this->downloadPdfSecure($pdf, 'laporan-pengeluaran-' . now()->format('Ymd-His') . '.pdf');
+        return $this->downloadPdfSecure($pdf, $filename ?? ('laporan-pengeluaran-' . now()->format('Ymd-His') . '.pdf'));
     }
 
-    public function expensesExcel(Request $request)
+    public function expensesExcel(Request $request, $filename = null)
     {
         $this->authorize('export report');
 
@@ -430,7 +430,7 @@ class ExportController extends Controller
             $request->date_from,
             $request->date_to
         );
-        $filename = 'laporan-pengeluaran-' . now()->format('Ymd-His') . '.xlsx';
+        $filename = $filename ?? ('laporan-pengeluaran-' . now()->format('Ymd-His') . '.xlsx');
 
         return $this->downloadExcelSecure($export, $filename);
     }
@@ -439,7 +439,7 @@ class ExportController extends Controller
     // LAPORAN PENGIRIMAN
     // ─────────────────────────────────────────────────────────────
 
-    public function shipmentPdf(Request $request)
+    public function shipmentPdf(Request $request, $filename = null)
     {
         $this->authorize('export report');
         $user = auth()->user();
@@ -479,10 +479,10 @@ class ExportController extends Controller
         $pdf = Pdf::loadView('exports.pdf.shipment', compact('shipments', 'warehouse', 'store', 'request'))
             ->setPaper('a4', 'portrait');
 
-        return $this->downloadPdfSecure($pdf, 'laporan-pengiriman-' . now()->format('Ymd-His') . '.pdf');
+        return $this->downloadPdfSecure($pdf, $filename ?? ('laporan-pengiriman-' . now()->format('Ymd-His') . '.pdf'));
     }
 
-    public function shipmentExcel(Request $request)
+    public function shipmentExcel(Request $request, $filename = null)
     {
         $this->authorize('export report');
         $user = auth()->user();
@@ -510,12 +510,12 @@ class ExportController extends Controller
             $request->date_from,
             $request->date_to
         );
-        $filename = 'laporan-pengiriman-' . now()->format('Ymd-His') . '.xlsx';
+        $filename = $filename ?? ('laporan-pengiriman-' . now()->format('Ymd-His') . '.xlsx');
 
         return $this->downloadExcelSecure($export, $filename);
     }
 
-    public function inboundPdf(Request $request)
+    public function inboundPdf(Request $request, $filename = null)
     {
         $this->authorize('export report');
         $user = auth()->user();
@@ -543,13 +543,13 @@ class ExportController extends Controller
 
         $warehouse = $warehouseId ? Warehouse::find($warehouseId) : null;
 
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('exports.pdf.inbound', compact('inbounds', 'warehouse', 'request'))
+        $pdf = Pdf::loadView('exports.pdf.inbound', compact('inbounds', 'warehouse', 'request'))
             ->setPaper('a4', 'portrait');
 
-        return $this->downloadPdfSecure($pdf, 'laporan-barang-masuk-' . now()->format('Ymd-His') . '.pdf');
+        return $this->downloadPdfSecure($pdf, $filename ?? ('laporan-barang-masuk-' . now()->format('Ymd-His') . '.pdf'));
     }
 
-    public function inboundExcel(Request $request)
+    public function inboundExcel(Request $request, $filename = null)
     {
         $this->authorize('export report');
         $user = auth()->user();
@@ -569,7 +569,7 @@ class ExportController extends Controller
             $request->date_from,
             $request->date_to
         );
-        $filename = 'laporan-barang-masuk-' . now()->format('Ymd-His') . '.xlsx';
+        $filename = $filename ?? ('laporan-barang-masuk-' . now()->format('Ymd-His') . '.xlsx');
 
         return $this->downloadExcelSecure($export, $filename);
     }
@@ -578,7 +578,7 @@ class ExportController extends Controller
     // LAPORAN TRANSFER TOKO
     // ─────────────────────────────────────────────────────────────
 
-    public function transferPdf(Request $request)
+    public function transferPdf(Request $request, $filename = null)
     {
         $this->authorize('export report');
 
@@ -598,10 +598,10 @@ class ExportController extends Controller
         $pdf = Pdf::loadView('exports.pdf.transfer', compact('transfers', 'fromStore', 'toStore', 'request'))
             ->setPaper('a4', 'portrait');
 
-        return $this->downloadPdfSecure($pdf, 'laporan-transfer-toko-' . now()->format('Ymd-His') . '.pdf');
+        return $this->downloadPdfSecure($pdf, $filename ?? ('laporan-transfer-toko-' . now()->format('Ymd-His') . '.pdf'));
     }
 
-    public function transferExcel(Request $request)
+    public function transferExcel(Request $request, $filename = null)
     {
         $this->authorize('export report');
 
@@ -612,7 +612,7 @@ class ExportController extends Controller
             $request->date_from,
             $request->date_to
         );
-        $filename = 'laporan-transfer-toko-' . now()->format('Ymd-His') . '.xlsx';
+        $filename = $filename ?? ('laporan-transfer-toko-' . now()->format('Ymd-His') . '.xlsx');
 
         return $this->downloadExcelSecure($export, $filename);
     }
@@ -621,7 +621,7 @@ class ExportController extends Controller
     // LAPORAN REWARD & BONUS TOKO
     // ─────────────────────────────────────────────────────────────
 
-    public function rewardsPdf(Request $request)
+    public function rewardsPdf(Request $request, $filename = null)
     {
         $this->authorize('view finance');
 
@@ -667,10 +667,10 @@ class ExportController extends Controller
         $pdf = Pdf::loadView('exports.pdf.rewards', compact('storeRewards', 'month', 'year'))
             ->setPaper('a4', 'portrait');
 
-        return $this->downloadPdfSecure($pdf, 'laporan-reward-bonus-' . now()->format('Ymd-His') . '.pdf');
+        return $this->downloadPdfSecure($pdf, $filename ?? ('laporan-reward-bonus-' . now()->format('Ymd-His') . '.pdf'));
     }
 
-    public function rewardsExcel(Request $request)
+    public function rewardsExcel(Request $request, $filename = null)
     {
         $this->authorize('view finance');
 
@@ -713,7 +713,9 @@ class ExportController extends Controller
             ];
         }
 
-        return $this->downloadExcelSecure(new RewardsExport($storeRewards), 'laporan-reward-bonus-' . now()->format('Ymd-His') . '.xlsx');
+        $filename = $filename ?? ('laporan-reward-bonus-' . now()->format('Ymd-His') . '.xlsx');
+
+        return $this->downloadExcelSecure(new RewardsExport($storeRewards), $filename);
     }
 
     /**
@@ -736,15 +738,19 @@ class ExportController extends Controller
 
         $fileSize = filesize($fullPath);
 
-        // Pass 'null' for filename to prevent Symfony/Laravel from appending the problematic filename*=utf-8 header
-        return response()->download($fullPath, null, [
+        // Instantiate BinaryFileResponse
+        $response = response()->download($fullPath, $filename, [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
             'Content-Length' => $fileSize,
             'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
             'Pragma' => 'no-cache',
             'X-Content-Type-Options' => 'nosniff',
         ])->deleteFileAfterSend(true);
+
+        // Crucial override: strips out Symfony's automatic filename* parameter
+        $response->headers->set('Content-Disposition', 'attachment; filename="' . $filename . '"');
+
+        return $response;
     }
 
     /**
@@ -754,10 +760,8 @@ class ExportController extends Controller
     {
         $content = $pdf->output();
         
-        // Pass 'null' for filename to bypass auto-formatting
-        return response()->streamDownload(function () use ($content) {
-            echo $content;
-        }, null, [
+        // Return standard response with clean Content-Disposition
+        return response($content, 200, [
             'Content-Type' => 'application/pdf',
             'Content-Disposition' => 'attachment; filename="' . $filename . '"',
             'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',

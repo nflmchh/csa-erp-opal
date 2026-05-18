@@ -98,7 +98,7 @@
         {{-- Export buttons --}}
         <div class="flex items-center gap-2 flex-wrap">
             <span class="text-xs text-gray-500 font-medium">Export:</span>
-            <a href="{{ route('exports.stock.pdf', request()->query()) }}" download="laporan-stok.pdf"
+            <a href="{{ route('exports.stock.pdf', array_merge(request()->query(), ['filename' => 'laporan-stok-' . now()->format('Ymd-His') . '.pdf'])) }}" download="laporan-stok.pdf"
                 class="inline-flex items-center gap-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-medium px-3 py-2 rounded-lg">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -106,7 +106,7 @@
                 </svg>
                 PDF
             </a>
-            <a href="{{ route('exports.stock.excel', request()->query()) }}"
+            <a href="{{ route('exports.stock.excel', array_merge(request()->query(), ['filename' => 'laporan-stok-' . now()->format('Ymd-His') . '.xlsx'])) }}"
                 class="inline-flex items-center gap-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-medium px-3 py-2 rounded-lg">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -114,7 +114,7 @@
                 </svg>
                 Excel
             </a>
-            <a href="{{ route('exports.stock.csv', request()->query()) }}"
+            <a href="{{ route('exports.stock.csv', array_merge(request()->query(), ['filename' => 'laporan-stok-' . now()->format('Ymd-His') . '.csv'])) }}"
                 class="inline-flex items-center gap-1.5 bg-gray-600 hover:bg-gray-700 text-white text-xs font-medium px-3 py-2 rounded-lg">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"

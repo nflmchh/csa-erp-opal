@@ -210,22 +210,22 @@ Route::middleware(['auth', 'active.user'])->group(function () {
 
     // Exports (PDF / Excel / CSV)
     Route::prefix('exports')->name('exports.')->group(function () {
-        Route::get('/sales/pdf',        [App\Http\Controllers\Export\ExportController::class, 'salesPdf'])->name('sales.pdf');
-        Route::get('/sales/excel',      [App\Http\Controllers\Export\ExportController::class, 'salesExcel'])->name('sales.excel');
-        Route::get('/sales/csv',        [App\Http\Controllers\Export\ExportController::class, 'salesCsv'])->name('sales.csv');
-        Route::get('/stock/pdf',        [App\Http\Controllers\Export\ExportController::class, 'stockPdf'])->name('stock.pdf');
-        Route::get('/stock/excel',      [App\Http\Controllers\Export\ExportController::class, 'stockExcel'])->name('stock.excel');
-        Route::get('/stock/csv',        [App\Http\Controllers\Export\ExportController::class, 'stockCsv'])->name('stock.csv');
-        Route::get('/expenses/pdf',     [App\Http\Controllers\Export\ExportController::class, 'expensesPdf'])->name('expenses.pdf');
-        Route::get('/expenses/excel',   [App\Http\Controllers\Export\ExportController::class, 'expensesExcel'])->name('expenses.excel');
-        Route::get('/shipment/pdf',     [App\Http\Controllers\Export\ExportController::class, 'shipmentPdf'])->name('shipment.pdf');
-        Route::get('/shipment/excel',   [App\Http\Controllers\Export\ExportController::class, 'shipmentExcel'])->name('shipment.excel');
-        Route::get('/transfer/pdf',     [App\Http\Controllers\Export\ExportController::class, 'transferPdf'])->name('transfer.pdf');
-        Route::get('/transfer/excel',   [App\Http\Controllers\Export\ExportController::class, 'transferExcel'])->name('transfer.excel');
-        Route::get('/rewards/pdf',      [App\Http\Controllers\Export\ExportController::class, 'rewardsPdf'])->name('rewards.pdf');
-        Route::get('/rewards/excel',    [App\Http\Controllers\Export\ExportController::class, 'rewardsExcel'])->name('rewards.excel');
-        Route::get('/inbound/pdf',      [App\Http\Controllers\Export\ExportController::class, 'inboundPdf'])->name('inbound.pdf');
-        Route::get('/inbound/excel',    [App\Http\Controllers\Export\ExportController::class, 'inboundExcel'])->name('inbound.excel');
+        Route::get('/sales/pdf/{filename?}',        [App\Http\Controllers\Export\ExportController::class, 'salesPdf'])->name('sales.pdf');
+        Route::get('/sales/excel/{filename?}',      [App\Http\Controllers\Export\ExportController::class, 'salesExcel'])->name('sales.excel');
+        Route::get('/sales/csv/{filename?}',        [App\Http\Controllers\Export\ExportController::class, 'salesCsv'])->name('sales.csv');
+        Route::get('/stock/pdf/{filename?}',        [App\Http\Controllers\Export\ExportController::class, 'stockPdf'])->name('stock.pdf');
+        Route::get('/stock/excel/{filename?}',      [App\Http\Controllers\Export\ExportController::class, 'stockExcel'])->name('stock.excel');
+        Route::get('/stock/csv/{filename?}',        [App\Http\Controllers\Export\ExportController::class, 'stockCsv'])->name('stock.csv');
+        Route::get('/expenses/pdf/{filename?}',     [App\Http\Controllers\Export\ExportController::class, 'expensesPdf'])->name('expenses.pdf');
+        Route::get('/expenses/excel/{filename?}',   [App\Http\Controllers\Export\ExportController::class, 'expensesExcel'])->name('expenses.excel');
+        Route::get('/shipment/pdf/{filename?}',     [App\Http\Controllers\Export\ExportController::class, 'shipmentPdf'])->name('shipment.pdf');
+        Route::get('/shipment/excel/{filename?}',   [App\Http\Controllers\Export\ExportController::class, 'shipmentExcel'])->name('shipment.excel');
+        Route::get('/transfer/pdf/{filename?}',     [App\Http\Controllers\Export\ExportController::class, 'transferPdf'])->name('transfer.pdf');
+        Route::get('/transfer/excel/{filename?}',   [App\Http\Controllers\Export\ExportController::class, 'transferExcel'])->name('transfer.excel');
+        Route::get('/rewards/pdf/{filename?}',      [App\Http\Controllers\Export\ExportController::class, 'rewardsPdf'])->name('rewards.pdf');
+        Route::get('/rewards/excel/{filename?}',    [App\Http\Controllers\Export\ExportController::class, 'rewardsExcel'])->name('rewards.excel');
+        Route::get('/inbound/pdf/{filename?}',      [App\Http\Controllers\Export\ExportController::class, 'inboundPdf'])->name('inbound.pdf');
+        Route::get('/inbound/excel/{filename?}',    [App\Http\Controllers\Export\ExportController::class, 'inboundExcel'])->name('inbound.excel');
     });
 
     // Label / Tag Printer
@@ -261,8 +261,8 @@ Route::middleware(['auth', 'active.user'])->group(function () {
 // ─────────────────────────────────────────────────────────────
 Route::prefix('testing')->name('testing.')->group(function () {
     Route::get('/export', [TestingExportController::class, 'index'])->name('export');
-    Route::get('/export/sales/csv',   [TestingExportController::class, 'salesCsv'])->name('sales.csv');
-    Route::get('/export/sales/excel', [TestingExportController::class, 'salesExcel'])->name('sales.excel');
+    Route::get('/export/sales/csv/{filename?}',   [TestingExportController::class, 'salesCsv'])->name('sales.csv');
+    Route::get('/export/sales/excel/{filename?}', [TestingExportController::class, 'salesExcel'])->name('sales.excel');
 });
 
 require __DIR__ . '/auth.php';

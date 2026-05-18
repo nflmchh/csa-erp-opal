@@ -44,8 +44,9 @@ class TestingExportController extends Controller
     // CSV EXPORT — format paling kompatibel dengan Bluefy / Safari iOS
     // ─────────────────────────────────────────────────────────────────────────
 
-    public function salesCsv(Request $request)
+    public function salesCsv(Request $request, $filename = null)
     {
+        $filename = $filename ?? ('laporan-penjualan-' . now()->format('Ymd-His') . '.csv');
         $query = Sale::with([
             'store',
             'paymentMethod',
@@ -62,7 +63,6 @@ class TestingExportController extends Controller
             ->limit(2000);
 
         $sales = $query->get();
-        $filename = 'laporan-penjualan-' . now()->format('Ymd-His') . '.csv';
 
         // ── Header HTTP yang kompatibel dengan Bluefy / iOS WebKit ──────────
         $headers = [
@@ -137,9 +137,9 @@ class TestingExportController extends Controller
     // EXCEL EXPORT — simpan ke disk dulu, lalu kirim dengan header eksplisit
     // ─────────────────────────────────────────────────────────────────────────
 
-    public function salesExcel(Request $request)
+    public function salesExcel(Request $request, $filename = null)
     {
-        $filename = 'laporan-penjualan-' . now()->format('Ymd-His') . '.xlsx';
+        $filename = $filename ?? ('laporan-penjualan-' . now()->format('Ymd-His') . '.xlsx');
         $diskPath = 'exports/' . $filename;        // relatif terhadap storage/app/
         $fullPath = storage_path('app/' . $diskPath);
 
@@ -158,14 +158,17 @@ class TestingExportController extends Controller
         }
 
         // Kirim dengan header HTTP eksplisit agar Bluefy mengenali format-nya
-        return response()
-            ->download($fullPath, null, [
+        $response = response()
+            ->download($fullPath, $filename, [
                 'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                'Content-Disposition' => 'attachment; filename="' . $filename . '"',
                 'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
                 'Pragma' => 'no-cache',
                 'X-Content-Type-Options' => 'nosniff',
             ])
             ->deleteFileAfterSend(true);
+
+        $response->headers->set('Content-Disposition', 'attachment; filename="' . $filename . '"');
+
+        return $response;
     }
 }
