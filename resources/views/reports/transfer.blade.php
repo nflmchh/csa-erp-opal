@@ -57,7 +57,7 @@
         {{-- Export buttons --}}
         <div class="flex items-center gap-2 flex-wrap">
             <span class="text-xs text-gray-500 font-medium">Export:</span>
-            <a href="{{ route('exports.transfer.pdf', array_merge(request()->query(), ['filename' => 'laporan-transfer-toko-' . now()->format('Ymd-His') . '.pdf'])) }}" download="laporan-transfer-toko.pdf"
+            <a href="{{ route('exports.transfer.pdf', array_merge(request()->query(), ['filename' => 'laporan-transfer-toko-' . now()->format('Y-m-d_H-i-s') . '.pdf'])) }}" download="laporan-transfer-toko.pdf"
                 class="inline-flex items-center gap-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-medium px-3 py-2 rounded-lg transition">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -65,7 +65,7 @@
                 </svg>
                 PDF
             </a>
-            <a href="{{ route('exports.transfer.excel', array_merge(request()->query(), ['filename' => 'laporan-transfer-toko-' . now()->format('Ymd-His') . '.xlsx'])) }}"
+            <a href="{{ route('exports.transfer.excel', array_merge(request()->query(), ['filename' => 'laporan-transfer-toko-' . now()->format('Y-m-d_H-i-s') . '.xlsx'])) }}"
                 class="inline-flex items-center gap-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-medium px-3 py-2 rounded-lg transition">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"

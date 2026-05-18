@@ -65,7 +65,7 @@ class ExportController extends Controller
         $pdf = Pdf::loadView('exports.pdf.sales', compact('sales', 'totalSales', 'totalOrders', 'store', 'request'))
             ->setPaper('a4', 'landscape');
 
-        return $this->downloadPdfSecure($pdf, $filename ?? ('laporan-penjualan-' . now()->format('Ymd-His') . '.pdf'));
+        return $this->downloadPdfSecure($pdf, $filename ?? ('laporan-penjualan-' . now()->format('Y-m-d_H-i-s') . '.pdf'));
     }
 
     public function salesExcel(Request $request, $filename = null)
@@ -73,7 +73,7 @@ class ExportController extends Controller
         $this->authorize('export report');
 
         $export = new SalesExport($request->store_id, $request->date_from, $request->date_to);
-        $filename = $filename ?? ('laporan-penjualan-' . now()->format('Ymd-His') . '.xlsx');
+        $filename = $filename ?? ('laporan-penjualan-' . now()->format('Y-m-d_H-i-s') . '.xlsx');
 
         return $this->downloadExcelSecure($export, $filename);
     }
@@ -106,7 +106,7 @@ class ExportController extends Controller
         }
 
         $sales = $query->orderBy('created_at', 'desc')->get();
-        $filename = $filename ?? ('laporan-penjualan-' . now()->format('Ymd-His') . '.csv');
+        $filename = $filename ?? ('laporan-penjualan-' . now()->format('Y-m-d_H-i-s') . '.csv');
 
         // Header yang kompatibel dengan Bluefy (iOS WebKit)
         $headers = [
@@ -255,7 +255,7 @@ class ExportController extends Controller
             'filterSize'
         ))->setPaper('a4', 'portrait');
 
-        return $this->downloadPdfSecure($pdf, $filename ?? ('laporan-stok-' . now()->format('Ymd-His') . '.pdf'));
+        return $this->downloadPdfSecure($pdf, $filename ?? ('laporan-stok-' . now()->format('Y-m-d_H-i-s') . '.pdf'));
     }
 
     public function stockExcel(Request $request, $filename = null)
@@ -287,7 +287,7 @@ class ExportController extends Controller
             $request->color_id ? (int) $request->color_id : null,
             $request->size_id ? (int) $request->size_id : null,
         );
-        $filename = $filename ?? ('laporan-stok-' . now()->format('Ymd-His') . '.xlsx');
+        $filename = $filename ?? ('laporan-stok-' . now()->format('Y-m-d_H-i-s') . '.xlsx');
 
         return $this->downloadExcelSecure($export, $filename);
     }
@@ -324,7 +324,7 @@ class ExportController extends Controller
             ->orderByDesc('qty')
             ->get();
 
-        $filename = $filename ?? ('laporan-stok-' . now()->format('Ymd-His') . '.csv');
+        $filename = $filename ?? ('laporan-stok-' . now()->format('Y-m-d_H-i-s') . '.csv');
         $headers = ['Content-Type' => 'text/csv', 'Content-Disposition' => "attachment; filename=\"{$filename}\""];
 
         $callback = function () use ($stocks) {
@@ -417,7 +417,7 @@ class ExportController extends Controller
             'dateTo'
         ))->setPaper('a4', 'portrait');
 
-        return $this->downloadPdfSecure($pdf, $filename ?? ('laporan-pengeluaran-' . now()->format('Ymd-His') . '.pdf'));
+        return $this->downloadPdfSecure($pdf, $filename ?? ('laporan-pengeluaran-' . now()->format('Y-m-d_H-i-s') . '.pdf'));
     }
 
     public function expensesExcel(Request $request, $filename = null)
@@ -430,7 +430,7 @@ class ExportController extends Controller
             $request->date_from,
             $request->date_to
         );
-        $filename = $filename ?? ('laporan-pengeluaran-' . now()->format('Ymd-His') . '.xlsx');
+        $filename = $filename ?? ('laporan-pengeluaran-' . now()->format('Y-m-d_H-i-s') . '.xlsx');
 
         return $this->downloadExcelSecure($export, $filename);
     }
@@ -479,7 +479,7 @@ class ExportController extends Controller
         $pdf = Pdf::loadView('exports.pdf.shipment', compact('shipments', 'warehouse', 'store', 'request'))
             ->setPaper('a4', 'portrait');
 
-        return $this->downloadPdfSecure($pdf, $filename ?? ('laporan-pengiriman-' . now()->format('Ymd-His') . '.pdf'));
+        return $this->downloadPdfSecure($pdf, $filename ?? ('laporan-pengiriman-' . now()->format('Y-m-d_H-i-s') . '.pdf'));
     }
 
     public function shipmentExcel(Request $request, $filename = null)
@@ -510,7 +510,7 @@ class ExportController extends Controller
             $request->date_from,
             $request->date_to
         );
-        $filename = $filename ?? ('laporan-pengiriman-' . now()->format('Ymd-His') . '.xlsx');
+        $filename = $filename ?? ('laporan-pengiriman-' . now()->format('Y-m-d_H-i-s') . '.xlsx');
 
         return $this->downloadExcelSecure($export, $filename);
     }
@@ -546,7 +546,7 @@ class ExportController extends Controller
         $pdf = Pdf::loadView('exports.pdf.inbound', compact('inbounds', 'warehouse', 'request'))
             ->setPaper('a4', 'portrait');
 
-        return $this->downloadPdfSecure($pdf, $filename ?? ('laporan-barang-masuk-' . now()->format('Ymd-His') . '.pdf'));
+        return $this->downloadPdfSecure($pdf, $filename ?? ('laporan-barang-masuk-' . now()->format('Y-m-d_H-i-s') . '.pdf'));
     }
 
     public function inboundExcel(Request $request, $filename = null)
@@ -569,7 +569,7 @@ class ExportController extends Controller
             $request->date_from,
             $request->date_to
         );
-        $filename = $filename ?? ('laporan-barang-masuk-' . now()->format('Ymd-His') . '.xlsx');
+        $filename = $filename ?? ('laporan-barang-masuk-' . now()->format('Y-m-d_H-i-s') . '.xlsx');
 
         return $this->downloadExcelSecure($export, $filename);
     }
@@ -598,7 +598,7 @@ class ExportController extends Controller
         $pdf = Pdf::loadView('exports.pdf.transfer', compact('transfers', 'fromStore', 'toStore', 'request'))
             ->setPaper('a4', 'portrait');
 
-        return $this->downloadPdfSecure($pdf, $filename ?? ('laporan-transfer-toko-' . now()->format('Ymd-His') . '.pdf'));
+        return $this->downloadPdfSecure($pdf, $filename ?? ('laporan-transfer-toko-' . now()->format('Y-m-d_H-i-s') . '.pdf'));
     }
 
     public function transferExcel(Request $request, $filename = null)
@@ -612,7 +612,7 @@ class ExportController extends Controller
             $request->date_from,
             $request->date_to
         );
-        $filename = $filename ?? ('laporan-transfer-toko-' . now()->format('Ymd-His') . '.xlsx');
+        $filename = $filename ?? ('laporan-transfer-toko-' . now()->format('Y-m-d_H-i-s') . '.xlsx');
 
         return $this->downloadExcelSecure($export, $filename);
     }
@@ -667,7 +667,7 @@ class ExportController extends Controller
         $pdf = Pdf::loadView('exports.pdf.rewards', compact('storeRewards', 'month', 'year'))
             ->setPaper('a4', 'portrait');
 
-        return $this->downloadPdfSecure($pdf, $filename ?? ('laporan-reward-bonus-' . now()->format('Ymd-His') . '.pdf'));
+        return $this->downloadPdfSecure($pdf, $filename ?? ('laporan-reward-bonus-' . now()->format('Y-m-d_H-i-s') . '.pdf'));
     }
 
     public function rewardsExcel(Request $request, $filename = null)
@@ -713,7 +713,7 @@ class ExportController extends Controller
             ];
         }
 
-        $filename = $filename ?? ('laporan-reward-bonus-' . now()->format('Ymd-His') . '.xlsx');
+        $filename = $filename ?? ('laporan-reward-bonus-' . now()->format('Y-m-d_H-i-s') . '.xlsx');
 
         return $this->downloadExcelSecure(new RewardsExport($storeRewards), $filename);
     }

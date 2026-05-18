@@ -46,7 +46,7 @@ class TestingExportController extends Controller
 
     public function salesCsv(Request $request, $filename = null)
     {
-        $filename = $filename ?? ('laporan-penjualan-' . now()->format('Ymd-His') . '.csv');
+        $filename = $filename ?? ('laporan-penjualan-' . now()->format('Y-m-d_H-i-s') . '.csv');
         $query = Sale::with([
             'store',
             'paymentMethod',
@@ -139,7 +139,7 @@ class TestingExportController extends Controller
 
     public function salesExcel(Request $request, $filename = null)
     {
-        $filename = $filename ?? ('laporan-penjualan-' . now()->format('Ymd-His') . '.xlsx');
+        $filename = $filename ?? ('laporan-penjualan-' . now()->format('Y-m-d_H-i-s') . '.xlsx');
         $diskPath = 'exports/' . $filename;        // relatif terhadap storage/app/
         $fullPath = storage_path('app/' . $diskPath);
 

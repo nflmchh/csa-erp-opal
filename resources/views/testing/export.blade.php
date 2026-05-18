@@ -341,7 +341,7 @@
             <div class="export-grid" id="export-buttons">
                 <!-- CSV — paling kompatibel -->
                 <a id="btn-csv"
-                   href="{{ route('testing.sales.csv', ['store_id' => $storeId, 'date_from' => $dateFrom, 'date_to' => $dateTo, 'filename' => 'laporan-penjualan-' . now()->format('Ymd-His') . '.csv']) }}"
+                   href="{{ route('testing.sales.csv', ['store_id' => $storeId, 'date_from' => $dateFrom, 'date_to' => $dateTo, 'filename' => 'laporan-penjualan-' . now()->format('Y-m-d_H-i-s') . '.csv']) }}"
                    download="laporan-penjualan.csv"
                    class="export-btn csv"
                    onclick="logDownload('CSV', this.href)">
@@ -354,7 +354,7 @@
 
                 <!-- Excel — mungkin bermasalah di Bluefy -->
                 <a id="btn-xlsx"
-                   href="{{ route('testing.sales.excel', ['store_id' => $storeId, 'date_from' => $dateFrom, 'date_to' => $dateTo, 'filename' => 'laporan-penjualan-' . now()->format('Ymd-His') . '.xlsx']) }}"
+                   href="{{ route('testing.sales.excel', ['store_id' => $storeId, 'date_from' => $dateFrom, 'date_to' => $dateTo, 'filename' => 'laporan-penjualan-' . now()->format('Y-m-d_H-i-s') . '.xlsx']) }}"
                    download="laporan-penjualan.xlsx"
                    class="export-btn xlsx"
                    onclick="logDownload('Excel (.xlsx)', this.href)">
