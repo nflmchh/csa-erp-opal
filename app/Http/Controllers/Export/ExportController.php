@@ -72,10 +72,29 @@ class ExportController extends Controller
     {
         $this->authorize('export report');
 
-        return Excel::download(
-            new SalesExport($request->store_id, $request->date_from, $request->date_to),
-            'laporan-penjualan-' . now()->format('Ymd-His') . '.xlsx'
-        );
+        $filename  = 'laporan-penjualan-' . now()->format('Ymd-His') . '.xlsx';
+        $diskPath  = 'exports/' . $filename;   // relatif ke storage/app/
+        $fullPath  = storage_path('app/' . $diskPath);
+        $export    = new SalesExport($request->store_id, $request->date_from, $request->date_to);
+
+        // Simpan sementara ke disk local lalu kirim dengan header eksplisit
+        // agar Bluefy (iOS WebKit) mengenali format file dengan benar
+        Excel::store($export, $diskPath, 'local');
+
+        if (!file_exists($fullPath)) {
+            // Fallback jika penyimpanan sementara gagal
+            return Excel::download($export, $filename);
+        }
+
+        return response()
+            ->download($fullPath, $filename, [
+                'Content-Type'           => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                'Content-Disposition'    => 'attachment; filename="' . $filename . '"; filename*=UTF-8\'\'' . rawurlencode($filename),
+                'Cache-Control'          => 'no-store, no-cache, must-revalidate, max-age=0',
+                'Pragma'                 => 'no-cache',
+                'X-Content-Type-Options' => 'nosniff',
+            ])
+            ->deleteFileAfterSend(true);
     }
 
     public function salesCsv(Request $request)
@@ -86,8 +105,8 @@ class ExportController extends Controller
         $isGlobal = $user->hasGlobalFinanceAccess() || $user->hasRole('superadmin') || $user->hasRole('owner');
 
         $query = Sale::with([
-            'store', 
-            'paymentMethod', 
+            'store',
+            'paymentMethod',
             'items.variant' => fn($q) => $q->withTrashed(),
             'items.variant.product' => fn($q) => $q->withTrashed(),
             'creator'
@@ -107,11 +126,28 @@ class ExportController extends Controller
 
         $sales    = $query->orderBy('created_at', 'desc')->get();
         $filename = 'laporan-penjualan-' . now()->format('Ymd-His') . '.csv';
-        $headers  = ['Content-Type' => 'text/csv', 'Content-Disposition' => "attachment; filename=\"{$filename}\""];
+
+        // Header yang kompatibel dengan Bluefy (iOS WebKit)
+        $headers = [
+            'Content-Type'           => 'text/csv; charset=UTF-8',
+            'Content-Disposition'    => 'attachment; filename="' . $filename . '"',
+            'Cache-Control'          => 'no-store, no-cache, must-revalidate, max-age=0',
+            'Pragma'                 => 'no-cache',
+            'X-Content-Type-Options' => 'nosniff',
+        ];
 
         $callback = function () use ($sales) {
             $handle = fopen('php://output', 'w');
-            fputcsv($handle, ['No. Penjualan', 'Toko', 'Metode Bayar', 'Kasir', 'Total Transaksi', 'Tanggal', 'Item', 'SKU/Variant', 'Qty', 'Harga Satuan', 'Subtotal Item']);
+
+            // BOM UTF-8 agar Excel / Numbers membaca encoding dengan benar
+            fprintf($handle, chr(0xEF) . chr(0xBB) . chr(0xBF));
+
+            fputcsv($handle, [
+                'No. Penjualan', 'Toko', 'Metode Bayar', 'Kasir',
+                'Total Transaksi', 'Tanggal',
+                'Item', 'SKU/Variant', 'Qty', 'Harga Satuan', 'Subtotal Item',
+            ]);
+
             foreach ($sales as $s) {
                 foreach ($s->items as $idx => $item) {
                     if ($idx === 0) {
@@ -126,7 +162,7 @@ class ExportController extends Controller
                             $item->variant?->sku ?? '-',
                             $item->qty,
                             $item->unit_price,
-                            $item->subtotal
+                            $item->subtotal,
                         ]);
                     } else {
                         fputcsv($handle, [
@@ -135,11 +171,12 @@ class ExportController extends Controller
                             $item->variant?->sku ?? '-',
                             $item->qty,
                             $item->unit_price,
-                            $item->subtotal
+                            $item->subtotal,
                         ]);
                     }
                 }
             }
+
             fclose($handle);
         };
 

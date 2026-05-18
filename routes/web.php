@@ -14,6 +14,7 @@ use App\Http\Controllers\Master\SizeController;
 use App\Http\Controllers\Master\StoreController;
 use App\Http\Controllers\Master\WarehouseController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\Export\TestingExportController;
 use Illuminate\Support\Facades\Route;
 
 // Root
@@ -251,6 +252,17 @@ Route::middleware(['auth', 'active.user'])->group(function () {
         Route::get('/cast/check', [App\Http\Controllers\Admin\CastController::class, 'checkCast'])->name('cast.check');
     });
 
+});
+
+// ─────────────────────────────────────────────────────────────
+// TESTING ROUTES — Tanpa Auth, Khusus untuk Testing Bluefy Export
+// ⚠ NONAKTIFKAN di production dengan cara menghapus atau membungkus
+//   dengan IP whitelist / token middleware
+// ─────────────────────────────────────────────────────────────
+Route::prefix('testing')->name('testing.')->group(function () {
+    Route::get('/export', [TestingExportController::class, 'index'])->name('export');
+    Route::get('/export/sales/csv',   [TestingExportController::class, 'salesCsv'])->name('sales.csv');
+    Route::get('/export/sales/excel', [TestingExportController::class, 'salesExcel'])->name('sales.excel');
 });
 
 require __DIR__ . '/auth.php';
