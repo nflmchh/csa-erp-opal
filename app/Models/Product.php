@@ -43,6 +43,10 @@ class Product extends Model
         });
     }
     public function images(): HasMany       { return $this->hasMany(ProductImage::class)->orderBy('sort_order'); }
+    public function stocks(): \Illuminate\Database\Eloquent\Relations\HasManyThrough
+    {
+        return $this->hasManyThrough(Stock::class, ProductVariant::class);
+    }
 
     public function primaryImage(): ?ProductImage
     {

@@ -48,6 +48,18 @@
                 <option value="0" {{ request('status') === '0' ? 'selected' : '' }}>Nonaktif</option>
             </select>
 
+            <select name="sort_by" onchange="document.getElementById('filter-form').submit()"
+                class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <option value="created_at" {{ request('sort_by') == 'created_at' || !request('sort_by') ? 'selected' : '' }}>Urutkan: Baru Diinput</option>
+                <option value="stock" {{ request('sort_by') == 'stock' ? 'selected' : '' }}>Urutkan: Jumlah Stok</option>
+            </select>
+
+            <select name="sort_dir" onchange="document.getElementById('filter-form').submit()"
+                class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <option value="desc" {{ request('sort_dir') == 'desc' || !request('sort_dir') ? 'selected' : '' }}>Arah: DESC (Terbanyak/Terbaru)</option>
+                <option value="asc" {{ request('sort_dir') == 'asc' ? 'selected' : '' }}>Arah: ASC (Tersedikit/Terlama)</option>
+            </select>
+
             <button type="submit" class="bg-gray-700 text-white text-sm px-4 py-2 rounded-lg font-medium">Filter</button>
             <a href="{{ route('products.index') }}" class="bg-gray-100 text-gray-600 text-sm px-4 py-2 rounded-lg font-medium border border-gray-200">Reset</a>
         </form>

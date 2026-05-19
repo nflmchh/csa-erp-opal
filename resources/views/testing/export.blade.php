@@ -484,7 +484,7 @@
         if (dateFrom) baseParams += '&date_from=' + encodeURIComponent(dateFrom);
         if (dateTo)   baseParams += '&date_to='   + encodeURIComponent(dateTo);
 
-        var timestamp = new Date().toISOString().replace(/[-:T]/g, '').substring(0, 14); // e.g. 20260518130831
+        var timestamp = new Date().toISOString().replace(/-/g, '').replace(/:/g, '').replace('T', '').substring(0, 14);
         var csvBase  = '{{ route("testing.sales.csv") }}' + '/laporan-penjualan-' + timestamp + '.csv';
         var xlsxBase = '{{ route("testing.sales.excel") }}' + '/laporan-penjualan-' + timestamp + '.xlsx';
 

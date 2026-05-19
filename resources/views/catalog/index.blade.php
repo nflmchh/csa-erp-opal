@@ -36,6 +36,22 @@
                 @endforeach
             </select>
         </div>
+        <div>
+            <label class="block text-xs font-medium text-gray-500 mb-1">Urutkan</label>
+            <select name="sort_by" onchange="this.form.submit()"
+                class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <option value="created_at" {{ request('sort_by') == 'created_at' || !request('sort_by') ? 'selected' : '' }}>Baru Diinput</option>
+                <option value="stock" {{ request('sort_by') == 'stock' ? 'selected' : '' }}>Jumlah Stok</option>
+            </select>
+        </div>
+        <div>
+            <label class="block text-xs font-medium text-gray-500 mb-1">Arah</label>
+            <select name="sort_dir" onchange="this.form.submit()"
+                class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <option value="desc" {{ request('sort_dir') == 'desc' || !request('sort_dir') ? 'selected' : '' }}>DESC (Terbanyak/Terbaru)</option>
+                <option value="asc" {{ request('sort_dir') == 'asc' ? 'selected' : '' }}>ASC (Tersedikit/Terlama)</option>
+            </select>
+        </div>
         <button type="submit" class="bg-indigo-600 text-white text-sm px-4 py-2 rounded-lg self-end">Cari</button>
         <a href="{{ route('catalog.index') }}" class="bg-gray-100 text-gray-600 text-sm px-4 py-2 rounded-lg self-end">Reset</a>
     </form>

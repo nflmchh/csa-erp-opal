@@ -11,11 +11,11 @@
         <div class="flex flex-col sm:flex-row gap-6">
             {{-- Primary image --}}
             @php $img = $product->primaryImage(); @endphp
-            <div class="w-full sm:w-40 h-40 rounded-xl bg-gray-100 flex items-center justify-center overflow-hidden shrink-0">
+            <div class="w-full sm:w-40 h-40 rounded-xl bg-gray-100 flex items-center justify-center overflow-hidden shrink-0" id="mainProductImageContainer">
                 @if($img)
-                <img src="{{ $img->url() }}" alt="{{ $product->name }}" class="w-full h-full object-cover">
+                <img id="mainProductImage" src="{{ $img->url() }}" alt="{{ $product->name }}" class="w-full h-full object-cover">
                 @else
-                <div class="text-gray-300 text-5xl">👕</div>
+                <div id="mainProductImagePlaceholder" class="text-gray-300 text-5xl">👕</div>
                 @endif
             </div>
 
@@ -87,8 +87,8 @@
         @if($product->images->count() > 1)
         <div class="flex gap-2 mt-4 overflow-x-auto pb-1">
             @foreach($product->images as $image)
-            <img src="{{ $image->url() }}" alt=""
-                class="w-16 h-16 rounded-lg object-cover border-2 {{ $image->is_primary ? 'border-indigo-500' : 'border-gray-200' }} shrink-0">
+            <img src="{{ $image->url() }}" alt="" onclick="changeMainImage('{{ $image->url() }}', this)"
+                class="thumbnail-img w-16 h-16 rounded-lg object-cover border-2 {{ $image->is_primary ? 'border-indigo-500' : 'border-gray-200' }} shrink-0 cursor-pointer hover:border-indigo-300 transition-colors">
             @endforeach
         </div>
         @endif
@@ -127,11 +127,11 @@
                     @foreach($product->variants as $variant)
                     <tr class="hover:bg-gray-50">
                         <td class="px-4 py-3">
-                            <div class="w-10 h-10 rounded border border-gray-100 overflow-hidden bg-gray-50">
+                            <div class="w-10 h-10 rounded border border-gray-100 overflow-hidden bg-gray-50 cursor-pointer hover:opacity-85 transition-opacity" title="Klik untuk lihat gambar utama">
                                 @if($variant->image)
-                                    <img src="{{ $variant->image->url() }}" class="w-full h-full object-cover">
+                                    <img src="{{ $variant->image->url() }}" class="w-full h-full object-cover" onclick="changeMainImage('{{ $variant->image->url() }}', null)">
                                 @elseif($product->images->isNotEmpty())
-                                    <img src="{{ $product->images->first()->url() }}" class="w-full h-full object-cover opacity-50">
+                                    <img src="{{ $product->images->first()->url() }}" class="w-full h-full object-cover opacity-50" onclick="changeMainImage('{{ $product->images->first()->url() }}', null)">
                                 @else
                                     <div class="w-full h-full flex items-center justify-center text-[10px] text-gray-300 italic">No Pic</div>
                                 @endif
@@ -189,6 +189,37 @@
 </div>
 {{-- SCRIPT PINTASAN SCANNER BARCODE --}}
     <script>
+        function changeMainImage(url, clickedElement) {
+            const container = document.getElementById('mainProductImageContainer');
+            if (!container) return;
+
+            let mainImg = document.getElementById('mainProductImage');
+            if (!mainImg) {
+                const placeholder = document.getElementById('mainProductImagePlaceholder');
+                if (placeholder) {
+                    placeholder.remove();
+                }
+                mainImg = document.createElement('img');
+                mainImg.id = 'mainProductImage';
+                mainImg.className = 'w-full h-full object-cover';
+                mainImg.alt = "{{ $product->name }}";
+                container.appendChild(mainImg);
+            }
+            
+            mainImg.src = url;
+
+            // Highlight border untuk thumbnail list
+            document.querySelectorAll('.thumbnail-img').forEach(function(img) {
+                img.classList.remove('border-indigo-500');
+                img.classList.add('border-gray-200');
+            });
+
+            if (clickedElement && clickedElement.classList.contains('thumbnail-img')) {
+                clickedElement.classList.remove('border-gray-200');
+                clickedElement.classList.add('border-indigo-500');
+            }
+        }
+
         let barcodeBuffer = '';
         let barcodeTimer = null;
 

@@ -24,6 +24,13 @@ class ProductController extends Controller
     {
         $this->authorize('view product');
 
+        $user = Auth::user();
+        $sortBy = $request->input('sort_by', 'created_at');
+        $sortDir = $request->input('sort_dir', 'desc');
+        if (!in_array($sortDir, ['asc', 'desc'])) {
+            $sortDir = 'desc';
+        }
+
         $query = Product::with(['brand', 'category', 'productType', 'images'])
             ->when($request->brand_id, fn($q) => $q->where('brand_id', $request->brand_id))
             ->when($request->category_id, fn($q) => $q->where('category_id', $request->category_id))
@@ -39,8 +46,25 @@ class ProductController extends Controller
                 });
             })
             ->when($request->status !== null && $request->status !== '', fn($q) =>
-                $q->where('is_active', $request->status))
-            ->latest();
+                $q->where('is_active', $request->status));
+
+        if ($sortBy === 'stock') {
+            $query->withSum(['stocks as total_stock' => function ($q) use ($user) {
+                if ($user) {
+                    if ($user->hasRole('kepala toko')) {
+                        $storeIds = $user->stores()->pluck('stores.id');
+                        $q->where('location_type', 'store')->whereIn('location_id', $storeIds);
+                    } elseif ($user->hasRole('admin gudang')) {
+                        $warehouseIds = $user->warehouses()->pluck('warehouses.id');
+                        $q->where('location_type', 'warehouse')->whereIn('location_id', $warehouseIds);
+                    }
+                }
+            }], 'qty')
+            ->orderBy('total_stock', $sortDir)
+            ->orderBy('created_at', 'desc');
+        } else {
+            $query->orderBy('created_at', $sortDir);
+        }
 
         $products    = $query->paginate(24)->withQueryString();
         $brands      = Brand::active()->orderBy('name')->get();

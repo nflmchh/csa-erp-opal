@@ -14,14 +14,19 @@ class CatalogController extends Controller
     public function index(Request $request)
     {
         $user = Auth::user();
+        $sortBy = $request->input('sort_by', 'created_at');
+        $sortDir = $request->input('sort_dir', 'desc');
+        if (!in_array($sortDir, ['asc', 'desc'])) {
+            $sortDir = 'desc';
+        }
 
         $query = Product::with(['brand', 'category', 'images', 
             // Filter stok berdasarkan Role User
             'variants.stocks' => function ($q) use ($user) {
-                if ($user->hasRole('kepala toko')) {
+                if ($user && $user->hasRole('kepala toko')) {
                     $storeIds = $user->stores()->pluck('stores.id');
                     $q->where('location_type', 'store')->whereIn('location_id', $storeIds);
-                } elseif ($user->hasRole('admin gudang')) {
+                } elseif ($user && $user->hasRole('admin gudang')) {
                     $warehouseIds = $user->warehouses()->pluck('warehouses.id');
                     $q->where('location_type', 'warehouse')->whereIn('location_id', $warehouseIds);
                 }
@@ -40,8 +45,25 @@ class CatalogController extends Controller
                                  $vq->where('sku', 'like', '%' . $request->search . '%');
                              });
                 });
-            })
-            ->latest();
+            });
+
+        if ($sortBy === 'stock') {
+            $query->withSum(['stocks as total_stock' => function ($q) use ($user) {
+                if ($user) {
+                    if ($user->hasRole('kepala toko')) {
+                        $storeIds = $user->stores()->pluck('stores.id');
+                        $q->where('location_type', 'store')->whereIn('location_id', $storeIds);
+                    } elseif ($user->hasRole('admin gudang')) {
+                        $warehouseIds = $user->warehouses()->pluck('warehouses.id');
+                        $q->where('location_type', 'warehouse')->whereIn('location_id', $warehouseIds);
+                    }
+                }
+            }], 'qty')
+            ->orderBy('total_stock', $sortDir)
+            ->orderBy('created_at', 'desc');
+        } else {
+            $query->orderBy('created_at', $sortDir);
+        }
 
         $products   = $query->paginate(24)->withQueryString();
         $brands     = Brand::active()->orderBy('name')->get();
