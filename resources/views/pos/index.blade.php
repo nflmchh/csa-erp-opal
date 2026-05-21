@@ -217,7 +217,7 @@
             </div>
 
             {{-- List Barang (Minimalis) --}}
-            <div id="cart-list" class="overflow-y-auto p-2 bg-white custom-scrollbar" style="max-height: 320px; min-height: 80px;">
+            <div id="cart-list" class="overflow-y-auto p-2 bg-white custom-scrollbar shrink-0" style="max-height: 180px; min-height: 70px;">
 
                 <div x-show="cart.length === 0" class="h-full flex flex-col items-center justify-center text-center px-6">
                     <div
@@ -267,9 +267,9 @@
                 </template>
             </div>
 
-            {{-- Area Pembayaran (Statis di Bawah - Direvisi menjadi Tema Terang) --}}
+            {{-- Area Pembayaran (Scrollable jika layar pendek) --}}
             <div
-                class="bg-gray-50 shrink-0 rounded-t-3xl shadow-[0_-4px_20px_rgba(0,0,0,0.05)] border-t border-gray-200 p-5">
+                class="bg-gray-50 flex-1 min-h-0 overflow-y-auto rounded-t-3xl shadow-[0_-4px_20px_rgba(0,0,0,0.05)] border-t border-gray-200 p-4 xl:p-5 custom-scrollbar">
 
                 <!-- Rincian -->
                 <div class="space-y-2 mb-4">
@@ -301,6 +301,7 @@
                     <input type="hidden" name="customer_phone" :value="customerPhone">
                     <input type="hidden" name="payment_status" :value="paymentStatus">
                     <input type="hidden" name="dp_amount" :value="rawAmountPaid">
+                    <input type="hidden" name="due_date" :value="dueDate">
                     <template x-for="(item, i) in cart" :key="i">
                         <span>
                             <input type="hidden" :name="`items[${i}][variant_id]`" :value="item.variant_id">
@@ -339,29 +340,42 @@
                     </div>
 
                     <!-- Status Pembayaran -->
-                    <div class="flex gap-2 mb-2">
-                        <button type="button" @click="paymentStatus = 'lunas'"
-                            :class="paymentStatus === 'lunas' ? 'bg-green-100 text-green-700 border-green-300' : 'bg-gray-50 text-gray-500 border-gray-200'"
-                            class="flex-1 py-2 rounded-xl text-[11px] font-bold border transition-colors">✅ Lunas</button>
-                        <button type="button" @click="paymentStatus = 'tempo'"
-                            :class="paymentStatus === 'tempo' ? 'bg-red-100 text-red-700 border-red-300' : 'bg-gray-50 text-gray-500 border-gray-200'"
-                            class="flex-1 py-2 rounded-xl text-[11px] font-bold border transition-colors">⏳ Tempo/DP/PO</button>
+                    <div class="mb-2">
+                        <label class="text-[9px] text-gray-500 font-bold uppercase tracking-wider block mb-1">Status Pembayaran</label>
+                        <select x-model="paymentStatus"
+                            class="w-full bg-white border border-gray-200 text-gray-800 text-xs font-bold rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none cursor-pointer appearance-none shadow-sm">
+                            <option value="lunas">✅ LUNAS</option>
+                            <option value="tempo">⏳ TEMPO</option>
+                            <option value="dp">💰 UANG MUKA (DP)</option>
+                            <option value="po">📦 PURCHASE ORDER (PO)</option>
+                        </select>
+                    </div>
+
+                    <!-- Jatuh Tempo (Hanya untuk Tempo/DP/PO) -->
+                    <div x-show="['tempo', 'dp', 'po'].includes(paymentStatus)" class="bg-white rounded-2xl p-3 mb-2 border border-gray-200 shadow-sm transition-all duration-300">
+                        <label class="text-[9px] text-gray-500 font-bold uppercase tracking-wider block mb-1">
+                            <span x-show="paymentStatus === 'tempo'">Tanggal Jatuh Tempo</span>
+                            <span x-show="paymentStatus === 'dp'">Jatuh Tempo Pelunasan DP</span>
+                            <span x-show="paymentStatus === 'po'">Jatuh Tempo Pembayaran PO</span>
+                        </label>
+                        <input type="date" x-model="dueDate" :required="['tempo', 'dp', 'po'].includes(paymentStatus)"
+                            class="w-full bg-transparent border-0 text-sm font-bold text-gray-900 p-0 focus:ring-0">
                     </div>
 
                     <!-- Input Uang Diterima -->
                     <div class="bg-white rounded-2xl p-3 mb-4 border border-gray-200 shadow-sm">
                         <div class="flex gap-3 items-center">
                             <div class="flex-1">
-                                <label class="text-[9px] text-gray-500 font-bold uppercase tracking-wider block mb-1" x-text="paymentStatus === 'tempo' ? 'UANG MUKA (DP)' : 'UANG DITERIMA'"></label>
+                                <label class="text-[9px] text-gray-500 font-bold uppercase tracking-wider block mb-1" x-text="['tempo', 'dp', 'po'].includes(paymentStatus) ? 'UANG MUKA (DP)' : 'UANG DITERIMA'"></label>
                                 <input type="text" inputmode="numeric" x-model="amountPaid"
                                     class="input-currency w-full bg-transparent border-0 text-xl font-black text-gray-900 p-0 focus:ring-0 placeholder-gray-300"
                                     placeholder="0">
                             </div>
                             <div class="w-px h-10 bg-gray-200"></div>
                             <div class="flex-1 text-right">
-                                <label class="text-[9px] text-gray-500 font-bold uppercase tracking-wider block mb-1" x-text="paymentStatus === 'tempo' ? 'SISA HUTANG' : 'KEMBALIAN'"></label>
-                                <div class="text-lg font-black" :class="paymentStatus === 'tempo' ? 'text-red-500' : (change >= 0 ? 'text-green-600' : 'text-red-500')"
-                                    x-text="paymentStatus === 'tempo' ? 'Rp ' + Math.max(0, total - rawAmountPaid).toLocaleString('id-ID') : 'Rp ' + Math.max(0, change).toLocaleString('id-ID')"></div>
+                                <label class="text-[9px] text-gray-500 font-bold uppercase tracking-wider block mb-1" x-text="['tempo', 'dp', 'po'].includes(paymentStatus) ? 'SISA HUTANG' : 'KEMBALIAN'"></label>
+                                <div class="text-lg font-black" :class="['tempo', 'dp', 'po'].includes(paymentStatus) ? 'text-red-500' : (change >= 0 ? 'text-green-600' : 'text-red-500')"
+                                    x-text="['tempo', 'dp', 'po'].includes(paymentStatus) ? 'Rp ' + Math.max(0, total - rawAmountPaid).toLocaleString('id-ID') : 'Rp ' + Math.max(0, change).toLocaleString('id-ID')"></div>
                             </div>
                         </div>
                     </div>
@@ -377,7 +391,7 @@
                         </select>
 
                         <button type="submit"
-                            :disabled="cart.length === 0 || !paymentMethodId || (paymentStatus === 'lunas' && rawAmountPaid < total) || processing"
+                            :disabled="cart.length === 0 || !paymentMethodId || (paymentStatus === 'lunas' && rawAmountPaid < total) || (['tempo', 'dp', 'po'].includes(paymentStatus) && !dueDate) || processing"
                             class="flex-1 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed text-white font-black py-3 rounded-xl text-base shadow-md hover:shadow-indigo-500/30 transition-all active:scale-95 flex items-center justify-center gap-2">
                             <svg x-show="!processing" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                             <svg x-show="processing" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
@@ -588,7 +602,8 @@
                 cachedCharacteristic: null,
                 customerName: '',
                 customerPhone: '',
-                paymentStatus: 'lunas', // 'lunas' | 'tempo'
+                paymentStatus: 'lunas', // 'lunas' | 'tempo' | 'dp' | 'po'
+                dueDate: '',
 
                 init() {
                     // Watch total: Jika total berubah dan metode bukan Cash, update amountPaid
@@ -784,6 +799,7 @@
                 async submitSale(e) {
                     if (this.cart.length === 0 || !this.paymentMethodId) return;
                     if (this.paymentStatus === 'lunas' && this.rawAmountPaid < this.total) return;
+                    if (['tempo', 'dp', 'po'].includes(this.paymentStatus) && !this.dueDate) return;
                     this.processing = true;
 
                     try {
@@ -817,6 +833,7 @@
                             this.customerName = '';
                             this.customerPhone = '';
                             this.paymentStatus = 'lunas';
+                            this.dueDate = '';
                         } else {
                             alert('Gagal: ' + data.error);
                         }
@@ -847,8 +864,8 @@
                     let pMethod = sale.payment_method || sale.paymentMethod;
                     let pMethodName = pMethod ? pMethod.name.toUpperCase() : '-';
                     let priceLabel = sale.price_method === 'custom' ? 'Ecer (Custom)' : (sale.price_method === 'grosir' ? 'Grosir' : 'Ecer');
-                    let statusLabel = (sale.payment_status === 'tempo') ? 'TEMPO / DP / PO' : 'LUNAS';
-                    let statusColor = (sale.payment_status === 'tempo') ? '#dc2626' : '#16a34a';
+                    let statusLabel = sale.payment_status.toUpperCase();
+                    let statusColor = (sale.payment_status === 'lunas') ? '#16a34a' : '#dc2626';
 
                     let customerHtml = '';
                     if (sale.customer_name) {
@@ -857,6 +874,15 @@
                         if (sale.customer_phone) {
                             customerHtml += `<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span>No telp Pelanggan:</span><span>${sale.customer_phone}</span></div>`;
                         }
+                    }
+
+                    let dueDateHtml = '';
+                    if (sale.due_date) {
+                        let dDate = new Date(sale.due_date);
+                        let formattedDueDate = String(dDate.getDate()).padStart(2, '0') + "/" + 
+                            String(dDate.getMonth() + 1).padStart(2, '0') + "/" + 
+                            dDate.getFullYear();
+                        dueDateHtml = `<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span>Jatuh Tempo:</span><span>${formattedDueDate}</span></div>`;
                     }
 
                     let d = new Date(sale.created_at);
@@ -915,6 +941,7 @@
                         <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span>Harga</span><span>${priceLabel}</span></div>
                         <div style="display:flex;justify-content:space-between;margin-bottom:4px;color:${statusColor};font-weight:bold"><span>Status</span><span>${statusLabel}</span></div>
                         ${customerHtml}
+                        ${dueDateHtml}
                         <div style="border-top:1px dashed #000;margin:10px 0"></div>
                         <div style="margin-bottom:6px">
                             <div style="display:flex;justify-content:space-between;font-weight:bold;font-size:12px;text-transform:uppercase;">
@@ -928,8 +955,8 @@
                         <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span>Subtotal</span><span>Rp ${fmt(sale.subtotal)}</span></div>
                         ${sale.discount_amount > 0 ? `<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span>Diskon</span><span>-Rp ${fmt(sale.discount_amount)}</span></div>` : ''}
                         <div style="display:flex;justify-content:space-between;font-weight:bold;font-size:15px;margin-top:8px"><span>TOTAL</span><span>Rp ${fmt(sale.total_amount)}</span></div>
-                        <div style="display:flex;justify-content:space-between;margin-top:8px"><span>Bayar (${sale.payment_status === 'tempo' ? 'DP' : 'Tunai'})</span><span>Rp ${fmt(sale.amount_paid)}</span></div>
-                        ${sale.payment_status === 'tempo' ? `<div style="display:flex;justify-content:space-between;font-weight:bold;color:#dc2626;margin-bottom:4px"><span>Sisa Hutang</span><span>Rp ${fmt(Math.max(0, sale.total_amount - sale.amount_paid))}</span></div>` : ''}
+                        <div style="display:flex;justify-content:space-between;margin-top:8px"><span>Bayar (${sale.payment_status === 'lunas' ? 'Tunai' : 'Uang Muka/DP'})</span><span>Rp ${fmt(sale.amount_paid)}</span></div>
+                        ${sale.payment_status !== 'lunas' ? `<div style="display:flex;justify-content:space-between;font-weight:bold;color:#dc2626;margin-bottom:4px"><span>Sisa Hutang</span><span>Rp ${fmt(Math.max(0, sale.total_amount - sale.amount_paid))}</span></div>` : ''}
                         ${sale.change_amount > 0 ? `<div style="display:flex;justify-content:space-between;font-weight:bold;margin-bottom:4px"><span>Kembalian</span><span>Rp ${fmt(sale.change_amount)}</span></div>` : ''}
                         <div style="border-top:1px dashed #000;margin:10px 0"></div>
                         ${bankHtml}

@@ -66,7 +66,17 @@ class DashboardController extends Controller
             })
             ->latest()->take(10)->get();
             
-            return view('dashboard.store', compact('todaySales', 'todayOrders', 'todayExpense', 'todayProfit', 'products'));
+            $approachingDueSales = Sale::with(['store'])
+                ->whereIn('store_id', $storeIds)
+                ->whereNotNull('customer_name')
+                ->where('customer_name', '!=', '')
+                ->where('payment_status', '!=', 'lunas')
+                ->whereNotNull('due_date')
+                ->orderBy('due_date', 'asc')
+                ->limit(5)
+                ->get();
+            
+            return view('dashboard.store', compact('todaySales', 'todayOrders', 'todayExpense', 'todayProfit', 'products', 'approachingDueSales'));
         }
 
         // ====================================================================
@@ -251,6 +261,15 @@ class DashboardController extends Controller
 
         $todayProfit = $todaySales - $todayExpense;
 
+        $approachingDueSales = Sale::with(['store'])
+            ->whereNotNull('customer_name')
+            ->where('customer_name', '!=', '')
+            ->where('payment_status', '!=', 'lunas')
+            ->whereNotNull('due_date')
+            ->orderBy('due_date', 'asc')
+            ->limit(5)
+            ->get();
+
         // Mengembalikan View aslinya (Super Admin Dashboard)
         return view('dashboard.index', compact(
             'stores', 'storeId', 'storeDateFilter', 'topDateFilter',
@@ -263,7 +282,8 @@ class DashboardController extends Controller
             'storeStockValue', 'warehouseStockValue',
             'monthReturns', 'pendingReturns',
             // PASTIKAN VARIABEL INI DITAMBAHKAN KE DALAM COMPACT:
-            'totalItemsSold', 'rewardToko', 'rewardOwner', 'totalExpense', 'todayExpense', 'todayProfit'
+            'totalItemsSold', 'rewardToko', 'rewardOwner', 'totalExpense', 'todayExpense', 'todayProfit',
+            'approachingDueSales'
         ));
     }
 }

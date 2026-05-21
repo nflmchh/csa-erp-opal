@@ -136,7 +136,8 @@ class POSController extends Controller
             'notes'             => 'nullable|string|max:300',
             'customer_name'     => 'nullable|string|max:150',
             'customer_phone'    => 'nullable|string|max:30',
-            'payment_status'    => 'nullable|in:lunas,tempo',
+            'payment_status'    => 'nullable|in:lunas,tempo,dp,po',
+            'due_date'          => 'nullable|date',
             'dp_amount'         => 'nullable|numeric|min:0',
             'items'             => 'required|array|min:1',
             'items.*.variant_id' => 'required|exists:product_variants,id',
@@ -198,6 +199,7 @@ class POSController extends Controller
                     'customer_name'     => $r->customer_name,
                     'customer_phone'    => $r->customer_phone,
                     'payment_status'    => $paymentStatus,
+                    'due_date'          => $r->due_date,
                     'dp_amount'         => $dpAmount,
                     'created_by'        => Auth::id(),
                 ]);

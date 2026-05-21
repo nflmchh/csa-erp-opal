@@ -1,176 +1,274 @@
 @extends('layouts.app')
-@section('title', 'Riwayat Transaksi')
-@section('page-title', 'Riwayat Transaksi POS')
-@section('breadcrumb', 'POS / Riwayat')
+@section('title', 'Detail Pelanggan')
+@section('page-title', 'Detail Pelanggan')
+@section('breadcrumb', 'Toko / Pelanggan / Detail')
 
 @section('content')
-    <div class="space-y-4" x-data="posHistoryApp()">
+<div class="space-y-6" x-data="posHistoryApp()">
 
-        <form method="GET" class="bg-white rounded-xl border border-gray-200 p-4 flex flex-wrap gap-3 items-end">
-            @if($stores->count() > 0)
-                <div>
-                    <label class="block text-xs font-medium text-gray-500 mb-1">Toko</label>
-                    <select name="store_id" onchange="this.form.submit()"
-                        class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                        <option value="">Semua Toko</option>
-                        @foreach($stores as $s)
-                            <option value="{{ $s->id }}" {{ request('store_id') == $s->id ? 'selected' : '' }}>{{ $s->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
-            @endif
-            <div>
-                <label class="block text-xs font-medium text-gray-500 mb-1">Dari Tanggal</label>
-                <input type="date" name="date_from" value="{{ request('date_from') }}"
-                    class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
-            </div>
-            <div>
-                <label class="block text-xs font-medium text-gray-500 mb-1">Sampai</label>
-                <input type="date" name="date_to" value="{{ request('date_to') }}"
-                    class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
-            </div>
-            {{-- Searchable & Scannable SKU Filter --}}
-            <div x-data="{ 
-                open: false, 
-                search: '{{ request('sku') }}', 
-                variants: @js($variants),
-                selectedIndex: -1,
-                get filteredVariants() {
-                    if (this.search === '') return this.variants.slice(0, 50);
-                    return this.variants.filter(v => 
-                        v.sku.toLowerCase().includes(this.search.toLowerCase()) || 
-                        v.product.name.toLowerCase().includes(this.search.toLowerCase())
-                    ).slice(0, 50);
-                },
-                select(v) {
-                    this.search = v.sku;
-                    this.open = false;
-                    $nextTick(() => {
-                        $el.closest('form').submit();
-                    });
-                },
-                onEnter() {
-                    const filtered = this.filteredVariants;
-                    if (this.selectedIndex >= 0 && this.selectedIndex < filtered.length) {
-                        this.select(filtered[this.selectedIndex]);
-                    } else if (filtered.length === 1) {
-                        this.select(filtered[0]);
-                    } else {
-                        // Fallback: submit form with current search text
-                        this.open = false;
-                        $nextTick(() => {
-                            $el.closest('form').submit();
-                        });
-                    }
-                }
-            }" class="relative w-full md:w-64" @click.outside="open = false">
-                <label class="block text-xs font-medium text-gray-500 mb-1">Cari / Scan SKU</label>
-                <div class="relative">
-                    <input 
-                        type="text" 
-                        name="sku" 
-                        x-model="search" 
-                        @focus="open = true"
-                        @input="open = true; selectedIndex = -1"
-                        @keydown.arrow-down.prevent="open = true; selectedIndex = (selectedIndex + 1) % filteredVariants.length"
-                        @keydown.arrow-up.prevent="open = true; selectedIndex = (selectedIndex - 1 + filteredVariants.length) % filteredVariants.length"
-                        @keydown.enter.prevent="onEnter()"
-                        placeholder="Ketik atau Scan Barcode..."
-                        autocomplete="off"
-                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    >
-                    <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                    </div>
-                </div>
+    <!-- Header Actions -->
+    <div class="flex items-center justify-between">
+        <a href="{{ route('store.customers.index') }}" 
+            class="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 transition font-medium">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+            </svg>
+            Kembali ke Daftar
+        </a>
+    </div>
 
-                {{-- Dropdown Result --}}
-                <div 
-                    x-show="open && filteredVariants.length > 0" 
-                    class="absolute z-[60] mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-xl max-h-60 overflow-y-auto custom-scrollbar"
-                    style="display: none;"
-                >
-                    <template x-for="(v, index) in filteredVariants" :key="v.id">
-                        <div 
-                            @click="select(v)"
-                            :class="{ 'bg-indigo-50 text-indigo-700': selectedIndex === index, 'hover:bg-gray-50': selectedIndex !== index }"
-                            class="px-4 py-2.5 cursor-pointer border-b border-gray-50 last:border-0 transition-colors"
-                        >
-                            <div class="font-bold text-sm" x-text="v.sku"></div>
-                            <div class="text-[11px] text-gray-500 truncate" x-text="v.product.name"></div>
-                        </div>
-                    </template>
-                </div>
+    <!-- Customer Overview and Statistics -->
+    <div class="flex flex-col lg:flex-row gap-6">
+        <!-- Profile Card -->
+        <div class="w-full lg:w-1/4 bg-white rounded-xl border border-gray-200 p-6 flex flex-col items-center text-center shadow-sm shrink-0">
+            <div class="flex items-center justify-center w-20 h-20 rounded-full bg-indigo-50 text-indigo-700 font-black text-2xl mb-4 border border-indigo-100">
+                {{ strtoupper(substr($customerName, 0, 2)) }}
             </div>
-            <button type="submit" class="bg-gray-800 text-white text-sm px-4 py-2 rounded-lg self-end">Filter</button>
-            <a href="{{ route('pos.history') }}"
-                class="bg-gray-100 text-gray-600 text-sm px-4 py-2 rounded-lg self-end">Reset</a>
-
-            @php
-                $totalAmount = $sales->sum('total_amount');
-                $totalItems = $sales->sum(fn($s) => $s->items->sum('qty'));
-            @endphp
-            <div class="ml-auto self-end text-sm text-gray-600">
-                <span class="font-semibold text-gray-900">{{ $sales->total() }}</span> transaksi ·
-                Total: <span class="font-semibold text-indigo-700">Rp {{ number_format($totalAmount, 0, ',', '.') }}</span>
-            </div>
-        </form>
-
-        <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-            <div class="overflow-x-auto">
-                <table class="w-full text-sm">
-                    <thead class="bg-gray-50 border-b border-gray-200">
-                        <tr>
-                            <th class="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase">No. Transaksi</th>
-                            <th class="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase">Waktu</th>
-                            <th class="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase">Toko</th>
-                            <th class="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase">Kasir</th>
-                            <th class="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase">Pembayaran</th>
-                            <th class="text-right px-4 py-3 text-xs font-semibold text-gray-600 uppercase">Item</th>
-                            <th class="text-right px-4 py-3 text-xs font-semibold text-gray-600 uppercase">Total</th>
-                            <th class="px-4 py-3"></th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100">
-                        @forelse($sales as $sale)
-                            <tr class="hover:bg-gray-50">
-                                <td class="px-4 py-3 font-mono text-xs font-semibold text-indigo-600">{{ $sale->sale_no }}</td>
-                                <td class="px-4 py-3 text-xs text-gray-400">{{ $sale->created_at->format('d/m/Y H:i') }}</td>
-                                <td class="px-4 py-3 text-xs text-gray-700">{{ $sale->store->name }}</td>
-                                <td class="px-4 py-3 text-xs text-gray-700">{{ $sale->creator?->name ?? '—' }}</td>
-                                <td class="px-4 py-3 text-xs text-gray-700">{{ $sale->paymentMethod?->name ?? '—' }}</td>
-                                <td class="px-4 py-3 text-right text-xs text-gray-700">{{ $sale->items->sum('qty') }}</td>
-                                <td class="px-4 py-3 text-right text-sm font-semibold text-gray-800">
-                                    Rp {{ number_format($sale->total_amount, 0, ',', '.') }}
-                                    @if($sale->discount_amount > 0)
-                                        <span class="block text-xs font-normal text-red-500">Diskon: Rp
-                                            {{ number_format($sale->discount_amount, 0, ',', '.') }}</span>
-                                    @endif
-                                </td>
-                                <td class="px-4 py-3 text-right">
-                                    <button @click="openReceipt({{ $sale->id }})"
-                                        class="inline-flex items-center gap-1.5 bg-indigo-50 hover:bg-indigo-600 text-indigo-600 hover:text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors shadow-sm">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                                        </svg>
-                                        Cetak
-                                    </button>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="8" class="px-4 py-12 text-center text-gray-400">Tidak ada transaksi</td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-            @if($sales->hasPages())
-                <div class="border-t border-gray-200 px-4 py-3">{{ $sales->links() }}</div>
-            @endif
+            <h3 class="text-lg font-bold text-gray-900 leading-tight mb-1" title="{{ $customerName }}">{{ $customerName }}</h3>
+            <p class="text-sm text-gray-500 font-medium flex items-center gap-1.5 justify-center">
+                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.94.725l.548 2.2a1 1 0 01-.321.988l-1.305.98a10.582 10.582 0 004.872 4.872l.98-1.305a1 1 0 01.988-.321l2.2.548a1 1 0 01.725.94V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                </svg>
+                {{ $customerPhone ?: '-' }}
+            </p>
         </div>
 
+        <!-- Metrics Cards -->
+        <div class="flex-1 grid grid-cols-1 md:grid-cols-4 gap-4">
+            <!-- Total Belanja Gross -->
+            <div class="bg-white rounded-xl border border-gray-200 p-4 flex items-center justify-between shadow-sm relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-12 h-12 bg-gray-50 rounded-bl-full -mr-3 -mt-3"></div>
+                <div class="relative z-10">
+                    <p class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Total Belanja (Gross)</p>
+                    <h4 class="text-lg font-black text-gray-900 mt-1">Rp {{ number_format($totalSpent, 0, ',', '.') }}</h4>
+                </div>
+                <div class="p-2 bg-gray-100 text-gray-600 rounded-lg relative z-10 shrink-0">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Total Belanja Net -->
+            <div class="bg-white rounded-xl border border-gray-200 p-4 flex items-center justify-between shadow-sm relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-12 h-12 bg-emerald-50 rounded-bl-full -mr-3 -mt-3"></div>
+                <div class="relative z-10">
+                    <p class="text-[10px] font-bold text-emerald-600 uppercase tracking-wider mb-1">Total Belanja (Net)</p>
+                    <h4 class="text-lg font-black text-emerald-600 mt-1">Rp {{ number_format($netSpent, 0, ',', '.') }}</h4>
+                </div>
+                <div class="p-2 bg-emerald-100 text-emerald-600 rounded-lg relative z-10 shrink-0">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Total Hutang -->
+            <div class="bg-white rounded-xl border border-gray-200 p-4 flex items-center justify-between shadow-sm relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-12 h-12 bg-rose-50 rounded-bl-full -mr-3 -mt-3"></div>
+                <div class="relative z-10">
+                    <p class="text-[10px] font-bold text-rose-500 uppercase tracking-wider mb-1">Total Hutang</p>
+                    <h4 class="text-lg font-black text-rose-600 mt-1">Rp {{ number_format($totalDebt, 0, ',', '.') }}</h4>
+                </div>
+                <div class="p-2 bg-rose-100 text-rose-600 rounded-lg relative z-10 shrink-0">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Total Transaksi -->
+            <div class="bg-white rounded-xl border border-gray-200 p-4 flex items-center justify-between shadow-sm relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-12 h-12 bg-blue-50 rounded-bl-full -mr-3 -mt-3"></div>
+                <div class="relative z-10">
+                    <p class="text-[10px] font-bold text-blue-500 uppercase tracking-wider mb-1">Total Transaksi</p>
+                    <h4 class="text-lg font-black text-gray-900 mt-1">{{ $totalTransactions }}x Belanja</h4>
+                </div>
+                <div class="p-2 bg-blue-100 text-blue-600 rounded-lg relative z-10 shrink-0">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Transaction Filter Form -->
+    <form method="GET" class="bg-white rounded-xl border border-gray-200 p-4 flex flex-wrap gap-3 items-end shadow-sm">
+        <input type="hidden" name="name" value="{{ $customerName }}">
+        <input type="hidden" name="phone" value="{{ $customerPhone }}">
+        @if($stores->count() > 1)
+        <div>
+            <label class="block text-xs font-medium text-gray-500 mb-1">Filter Toko</label>
+            <select name="store_id" onchange="this.form.submit()"
+                class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <option value="">Semua Toko</option>
+                @foreach($stores as $s)
+                <option value="{{ $s->id }}" {{ $storeId == $s->id ? 'selected' : '' }}>{{ $s->name }}</option>
+                @endforeach
+            </select>
+        </div>
+        @endif
+        <button type="submit" class="bg-gray-800 text-white text-sm px-4 py-2 rounded-lg self-end hover:bg-gray-700 transition">Saring</button>
+        <a href="{{ route('store.customers.show', ['name' => $customerName, 'phone' => $customerPhone]) }}" 
+            class="bg-gray-100 text-gray-600 text-sm px-4 py-2 rounded-lg self-end hover:bg-gray-200 transition">Reset Filter</a>
+    </form>
+
+    @if($sales->where('payment_status', '!=', 'lunas')->count() > 0)
+    <!-- Unpaid Transactions Section -->
+    <div class="bg-white rounded-xl border border-red-200 shadow-sm overflow-hidden">
+        <div class="bg-red-50/50 border-b border-red-100 px-6 py-4">
+            <h4 class="text-sm font-bold text-red-800 flex items-center gap-2">
+                <svg class="w-4 h-4 text-red-600 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                </svg>
+                Daftar Transaksi Belum Lunas
+            </h4>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm text-left">
+                <thead class="bg-red-50/30 text-red-700 font-semibold border-b border-red-100">
+                    <tr>
+                        <th class="px-6 py-3 text-xs uppercase tracking-wider">No. Transaksi</th>
+                        <th class="px-6 py-3 text-xs uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-3 text-xs uppercase tracking-wider">Tanggal Transaksi</th>
+                        <th class="px-6 py-3 text-xs uppercase tracking-wider">Jatuh Tempo</th>
+                        <th class="px-6 py-3 text-xs uppercase tracking-wider text-right">Total Belanja</th>
+                        <th class="px-6 py-3 text-xs uppercase tracking-wider text-right">Telah Dibayar</th>
+                        <th class="px-6 py-3 text-xs uppercase tracking-wider text-right text-red-600">Sisa Hutang</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-red-100 bg-red-50/10">
+                    @foreach($sales->where('payment_status', '!=', 'lunas') as $sale)
+                    <tr class="hover:bg-red-50/30 transition-colors">
+                        <td class="px-6 py-4 whitespace-nowrap font-mono font-medium text-indigo-600">
+                            <button @click="openReceipt({{ $sale->id }})" class="hover:underline flex items-center gap-1.5 text-left font-semibold">
+                                <span>{{ $sale->sale_no }}</span>
+                                <svg class="w-3.5 h-3.5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                                </svg>
+                            </button>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-800">
+                                {{ strtoupper($sale->payment_status) }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-gray-600">
+                            {{ $sale->created_at->format('d/m/Y') }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap font-medium {{ \Carbon\Carbon::parse($sale->due_date)->isPast() ? 'text-red-600 font-bold' : 'text-gray-600' }}">
+                            {{ $sale->due_date ? \Carbon\Carbon::parse($sale->due_date)->format('d/m/Y') : '-' }}
+                            @if($sale->due_date && \Carbon\Carbon::parse($sale->due_date)->isPast())
+                                <span class="text-[9px] bg-red-600 text-white px-1.5 py-0.5 rounded ml-1 uppercase">Overdue</span>
+                            @endif
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right font-semibold text-gray-900">
+                            Rp {{ number_format($sale->total_amount, 0, ',', '.') }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-gray-600">
+                            Rp {{ number_format($sale->amount_paid, 0, ',', '.') }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right font-bold text-red-600">
+                            Rp {{ number_format(max(0, $sale->total_amount - $sale->amount_paid), 0, ',', '.') }}
+                        </td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    </div>
+    @endif
+
+    <!-- Detailed Transaction Table -->
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        <div class="border-b border-gray-200 px-6 py-4">
+            <h4 class="text-sm font-bold text-gray-800">Riwayat Riil Transaksi Pelanggan</h4>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm text-left">
+                <thead class="bg-gray-50 text-gray-600 font-semibold border-b border-gray-200">
+                    <tr>
+                        <th class="px-6 py-3 text-xs uppercase tracking-wider">No. Transaksi</th>
+                        <th class="px-6 py-3 text-xs uppercase tracking-wider">Tanggal & Waktu</th>
+                        <th class="px-6 py-3 text-xs uppercase tracking-wider">Toko</th>
+                        <th class="px-6 py-3 text-xs uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-3 text-xs uppercase tracking-wider">Jatuh Tempo</th>
+                        <th class="px-6 py-3 text-xs uppercase tracking-wider">Metode Pembayaran</th>
+                        <th class="px-6 py-3 text-xs uppercase tracking-wider">Kasir/Pembuat</th>
+                        <th class="px-6 py-3 text-xs uppercase tracking-wider text-right">Sisa Hutang</th>
+                        <th class="px-6 py-3 text-xs uppercase tracking-wider text-right">Total Belanja</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    @forelse($sales as $sale)
+                    <tr class="hover:bg-gray-50 transition-colors {{ $sale->payment_status !== 'lunas' ? 'bg-rose-50/20' : '' }}">
+                        <td class="px-6 py-4 whitespace-nowrap font-mono font-medium text-indigo-600">
+                            <button @click="openReceipt({{ $sale->id }})" class="hover:underline flex items-center gap-1.5 text-left font-semibold">
+                                <span>{{ $sale->sale_no }}</span>
+                                <svg class="w-3.5 h-3.5 text-indigo-500 hover:text-indigo-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                                </svg>
+                            </button>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-gray-600">
+                            {{ $sale->created_at->format('d/m/Y H:i') }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-gray-600">
+                            {{ $sale->store ? $sale->store->name : '-' }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            @if($sale->payment_status === 'lunas')
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-800">
+                                Lunas
+                            </span>
+                            @elseif($sale->payment_status === 'tempo')
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-800 animate-pulse">
+                                Tempo
+                            </span>
+                            @elseif($sale->payment_status === 'dp')
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">
+                                DP (Uang Muka)
+                            </span>
+                            @elseif($sale->payment_status === 'po')
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
+                                PO
+                            </span>
+                            @else
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-800">
+                                {{ strtoupper($sale->payment_status) }}
+                            </span>
+                            @endif
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-gray-600">
+                            {{ $sale->due_date ? \Carbon\Carbon::parse($sale->due_date)->format('d/m/Y') : '-' }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-gray-700 font-medium">
+                            {{ $sale->paymentMethod ? $sale->paymentMethod->name : '-' }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-gray-500">
+                            {{ $sale->creator ? $sale->creator->name : '-' }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right font-semibold text-rose-600">
+                            Rp {{ number_format(max(0, $sale->total_amount - $sale->amount_paid), 0, ',', '.') }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right font-semibold text-gray-900">
+                            Rp {{ number_format($sale->total_amount, 0, ',', '.') }}
+                        </td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="9" class="px-6 py-12 text-center text-gray-400">
+                            Belum ada riwayat transaksi pada filter toko terpilih.
+                        </td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Print Modal Teleport -->
     <template x-teleport="body">
         <div x-show="showReceiptModal" style="display: none; z-index: 999999;" class="fixed inset-0 flex items-center justify-center bg-gray-900/70 backdrop-blur-md p-4 transition-opacity">
             <div @click.outside="showReceiptModal = false" x-show="showReceiptModal" x-transition.scale.origin.bottom class="bg-white w-full max-w-md rounded-[2rem] overflow-hidden shadow-2xl flex flex-col max-h-[90vh] border border-white/20">
@@ -233,20 +331,22 @@
     </template>
 
     <style>
-        /* Mempercantik Scrollbar */
         .custom-scrollbar::-webkit-scrollbar { width: 5px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 20px; }
 
         @media print {
             header, nav, aside { display: none !important; }
-            .space-y-4 { display: none !important; }
+            .space-y-6 { display: none !important; }
             .fixed.inset-0 { position: static !important; background: transparent !important; padding: 0 !important; }
             .bg-white.max-w-md { max-width: 100% !important; box-shadow: none !important; height: auto !important; }
             .bg-indigo-600, .p-5.bg-white.border-t { display: none !important; }
             @page { margin: 0; }
         }
     </style>
+
+</div>
+@endsection
 
 @push('scripts')
 <script>
@@ -271,8 +371,6 @@ function posHistoryApp() {
                 let data = await res.json();
                 if (data.success) {
                     this.currentSaleData = data.sale;
-                    // Jika server berhasil render HTML (ada library QR/barcode), tampilkan
-                    // Jika tidak (hosting tanpa library), buat preview sederhana dari data
                     if (data.html) {
                         this.receiptHtmlHtml = data.html;
                     } else {
@@ -308,8 +406,15 @@ function posHistoryApp() {
             let pMethod = sale.payment_method || sale.paymentMethod;
             let pMethodName = pMethod ? pMethod.name.toUpperCase() : '-';
             let priceLabel = sale.price_method === 'custom' ? 'Ecer (Custom)' : (sale.price_method === 'grosir' ? 'Grosir' : 'Ecer');
-            let statusLabel = sale.payment_status.toUpperCase();
+            let statusLabel = sale.payment_status ? sale.payment_status.toUpperCase() : 'LUNAS';
             let statusColor = (sale.payment_status === 'lunas') ? '#16a34a' : '#dc2626';
+
+            let dueDateHtml = '';
+            if (sale.due_date) {
+                let dueD = new Date(sale.due_date);
+                let dueFmt = String(dueD.getDate()).padStart(2, '0') + "/" + String(dueD.getMonth() + 1).padStart(2, '0') + "/" + dueD.getFullYear();
+                dueDateHtml = `<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span>Jatuh Tempo</span><span>${dueFmt}</span></div>`;
+            }
 
             let customerHtml = '';
             if (sale.customer_name) {
@@ -318,15 +423,6 @@ function posHistoryApp() {
                 if (sale.customer_phone) {
                     customerHtml += `<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span>No telp Pelanggan:</span><span>${sale.customer_phone}</span></div>`;
                 }
-            }
-
-            let dueDateHtml = '';
-            if (sale.due_date) {
-                let dDate = new Date(sale.due_date);
-                let formattedDueDate = String(dDate.getDate()).padStart(2, '0') + "/" + 
-                    String(dDate.getMonth() + 1).padStart(2, '0') + "/" + 
-                    dDate.getFullYear();
-                dueDateHtml = `<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span>Jatuh Tempo:</span><span>${formattedDueDate}</span></div>`;
             }
 
             let d = new Date(sale.created_at);
@@ -384,8 +480,8 @@ function posHistoryApp() {
                 <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span>Metode</span><span>${pMethodName}</span></div>
                 <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span>Harga</span><span>${priceLabel}</span></div>
                 <div style="display:flex;justify-content:space-between;margin-bottom:4px;color:${statusColor};font-weight:bold"><span>Status</span><span>${statusLabel}</span></div>
-                ${customerHtml}
                 ${dueDateHtml}
+                ${customerHtml}
                 <div style="border-top:1px dashed #000;margin:10px 0"></div>
                 <div style="margin-bottom:6px">
                     <div style="display:flex;justify-content:space-between;font-weight:bold;font-size:12px;text-transform:uppercase;">
@@ -520,8 +616,13 @@ function posHistoryApp() {
                     let priceLabel = sale.price_method === 'custom' ? 'Ecer (Custom)' : (sale.price_method === 'grosir' ? 'Grosir' : 'Ecer');
                     text += alignLR("Harga:", priceLabel);
                     
-                    let statusLabel = sale.payment_status.toUpperCase();
+                    let statusLabel = sale.payment_status ? sale.payment_status.toUpperCase() : 'LUNAS';
                     text += alignLR("Status:", statusLabel);
+                    if (sale.due_date) {
+                        let dueD = new Date(sale.due_date);
+                        let dueFmt = String(dueD.getDate()).padStart(2, '0') + "/" + String(dueD.getMonth() + 1).padStart(2, '0') + "/" + dueD.getFullYear();
+                        text += alignLR("Jatuh Tempo:", dueFmt);
+                    }
 
                     if (sale.customer_name) {
                         text += "------------------------------------------------\n";
@@ -529,14 +630,6 @@ function posHistoryApp() {
                         if (sale.customer_phone) {
                             text += alignLR("No telp Pelanggan:", sale.customer_phone);
                         }
-                    }
-
-                    if (sale.due_date) {
-                        let dDate = new Date(sale.due_date);
-                        let formattedDueDate = String(dDate.getDate()).padStart(2, '0') + "/" + 
-                            String(dDate.getMonth() + 1).padStart(2, '0') + "/" + 
-                            dDate.getFullYear();
-                        text += alignLR("Jatuh Tempo:", formattedDueDate);
                     }
 
                     text += "------------------------------------------------\n";
@@ -562,7 +655,7 @@ function posHistoryApp() {
                     }
                     text += alignLR("TOTAL", "Rp " + parseInt(sale.total_amount).toLocaleString('id-ID'));
                     
-                    let bayarLabel = (sale.payment_status === 'lunas') ? 'Bayar (Tunai)' : 'Bayar (DP)';
+                    let bayarLabel = (sale.payment_status === 'lunas') ? 'Bayar (Tunai)' : 'Bayar (Uang Muka/DP)';
                     text += alignLR(bayarLabel, "Rp " + parseInt(sale.amount_paid).toLocaleString('id-ID'));
                     
                     if (sale.payment_status !== 'lunas') {
@@ -658,4 +751,3 @@ function posHistoryApp() {
 }
 </script>
 @endpush
-@endsection

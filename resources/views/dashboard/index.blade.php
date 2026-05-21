@@ -57,6 +57,86 @@
             </form>
         </div>
 
+        {{-- Pelanggan Jatuh Tempo Card --}}
+        @if(isset($approachingDueSales) && $approachingDueSales->count() > 0)
+        <div class="bg-white rounded-xl border border-red-200 shadow-sm overflow-hidden">
+            <div class="bg-red-50/50 border-b border-red-100 px-6 py-4 flex items-center justify-between">
+                <h4 class="text-sm font-bold text-red-800 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-red-600 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
+                    Peringatan Pembayaran Jatuh Tempo Pelanggan
+                </h4>
+                <span class="text-xs bg-red-100 text-red-800 px-2.5 py-0.5 rounded-full font-bold">Mendekati / Lewat Tempo</span>
+            </div>
+            <div class="divide-y divide-gray-100">
+                @foreach($approachingDueSales as $sale)
+                @php
+                    $due = \Carbon\Carbon::parse($sale->due_date);
+                    $isOverdue = $due->isPast();
+                    $daysDiff = now()->startOfDay()->diffInDays($due, false);
+                @endphp
+                <div class="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-red-50/10 transition-colors">
+                    <div class="flex items-start gap-3">
+                        <div class="p-2 {{ $isOverdue ? 'bg-red-100 text-red-600' : 'bg-amber-100 text-amber-600' }} rounded-lg shrink-0 mt-0.5">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h5 class="text-sm font-bold text-gray-900">{{ $sale->customer_name }}</h5>
+                                <span class="text-xs text-gray-500 font-mono">({{ $sale->customer_phone ?: '-' }})</span>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-0.5">
+                                No. Transaksi: <span class="font-mono text-indigo-600 font-semibold">{{ $sale->sale_no }}</span> 
+                                @if($sale->store)
+                                    · Toko: <span class="font-medium text-gray-700">{{ $sale->store->name }}</span>
+                                @endif
+                            </p>
+                            <p class="text-xs font-semibold mt-1">
+                                Status: 
+                                <span class="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] uppercase font-bold {{ $sale->payment_status === 'tempo' ? 'bg-red-100 text-red-800' : ($sale->payment_status === 'dp' ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800') }}">
+                                    {{ strtoupper($sale->payment_status) }}
+                                </span>
+                            </p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-6 justify-between sm:justify-end">
+                        <div class="text-left sm:text-right">
+                            <p class="text-[10px] font-bold text-gray-400 uppercase">Sisa Hutang</p>
+                            <p class="text-sm font-extrabold text-red-600">Rp {{ number_format(max(0, $sale->total_amount - $sale->amount_paid), 0, ',', '.') }}</p>
+                        </div>
+                        <div class="text-left sm:text-right min-w-[120px]">
+                            <p class="text-[10px] font-bold text-gray-400 uppercase">Jatuh Tempo</p>
+                            <p class="text-xs font-bold {{ $isOverdue ? 'text-red-600' : 'text-amber-600' }}">
+                                {{ $due->format('d/m/Y') }}
+                            </p>
+                            <p class="text-[10px] mt-0.5 {{ $isOverdue ? 'text-red-700 font-extrabold' : 'text-gray-500 font-semibold' }}">
+                                @if($daysDiff < 0)
+                                    Lewat {{ abs($daysDiff) }} hari!
+                                @elseif($daysDiff == 0)
+                                    Hari ini!
+                                @else
+                                    {{ $daysDiff }} hari lagi
+                                @endif
+                            </p>
+                        </div>
+                        <div class="shrink-0 text-right">
+                            <a href="{{ route('store.customers.show', ['name' => $sale->customer_name, 'phone' => $sale->customer_phone]) }}" class="inline-flex items-center gap-1 bg-gray-900 text-white hover:bg-gray-800 text-xs px-3 py-1.5 rounded-lg font-medium shadow-sm transition">
+                                <span>Detail</span>
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                @endforeach
+            </div>
+        </div>
+        @endif
+
         {{-- 2. FINANCIAL & EXECUTIVE SUMMARY (KHUSUS SUPERADMIN / OWNER) --}}
         @hasanyrole('superadmin|owner')
         @php

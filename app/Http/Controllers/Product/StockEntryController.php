@@ -73,7 +73,7 @@ class StockEntryController extends Controller
             $locationType,
             $locationId,
             $request->qty,
-            'local_entry',
+            'in',
             $request->note
         );
 

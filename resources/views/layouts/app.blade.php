@@ -140,6 +140,7 @@
                         ['route' => 'store.stock.index',    'label' => 'Stok Toko'],
                         ['route' => 'store.receiving.index','label' => 'Terima Kiriman'],
                         ['route' => 'store.opname.index',   'label' => 'Stock Opname'],
+                        ['route' => 'store.customers.index', 'label' => 'Data Pelanggan'],
                         ['route' => 'pos.history',          'label' => 'Riwayat Transaksi'],
                     ] as $item)
                     <a href="{{ route($item['route']) }}"

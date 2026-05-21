@@ -124,6 +124,8 @@ Route::middleware(['auth', 'active.user'])->group(function () {
         Route::get('/receiving/{shipment}', [App\Http\Controllers\Store\ReceivingController::class, 'show'])->name('receiving.show');
         Route::post('/receiving/{shipment}', [App\Http\Controllers\Store\ReceivingController::class, 'confirm'])->name('receiving.confirm');
         Route::get('/opname', [App\Http\Controllers\Store\StoreOpnameController::class, 'index'])->name('opname.index');
+        Route::get('/customers', [App\Http\Controllers\Store\StoreCustomerController::class, 'index'])->name('customers.index');
+        Route::get('/customers/detail', [App\Http\Controllers\Store\StoreCustomerController::class, 'show'])->name('customers.show');
     });
 
     // Store-to-Store Transfers

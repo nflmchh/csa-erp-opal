@@ -57,10 +57,13 @@
     @php
         $priceLabels = ['system' => 'Ecer', 'grosir' => 'Grosir', 'custom' => 'Ecer (Custom)'];
         $priceLabel  = $priceLabels[$sale->price_method ?? 'system'] ?? 'Ecer';
-        $statusLabel = ($sale->payment_status === 'tempo') ? 'TEMPO / DP / PO' : 'LUNAS';
+        $statusLabel = strtoupper($sale->payment_status);
     @endphp
     <div class="row"><span>Harga</span><span>{{ $priceLabel }}</span></div>
-    <div class="row bold" style="color: {{ $sale->payment_status === 'tempo' ? '#dc2626' : '#16a34a' }}"><span>Status</span><span>{{ $statusLabel }}</span></div>
+    <div class="row bold" style="color: {{ $sale->payment_status === 'lunas' ? '#16a34a' : '#dc2626' }}"><span>Status</span><span>{{ $statusLabel }}</span></div>
+    @if($sale->due_date)
+    <div class="row"><span>Jatuh Tempo</span><span>{{ \Carbon\Carbon::parse($sale->due_date)->format('d/m/Y') }}</span></div>
+    @endif
     @if($sale->customer_name)
     <div class="divider" style="margin: 6px 0;"></div>
     <div class="row"><span>Pelanggan</span><span class="bold">{{ $sale->customer_name }}</span></div>
@@ -103,8 +106,8 @@
         <span>TOTAL</span>
         <span>Rp {{ number_format($sale->total_amount, 0, ',', '.') }}</span>
     </div>
-    <div class="row" style="margin-top:8px"><span>Bayar ({{ $sale->payment_status === 'tempo' ? 'DP' : 'Tunai' }})</span><span>Rp {{ number_format($sale->amount_paid, 0, ',', '.') }}</span></div>
-    @if($sale->payment_status === 'tempo')
+    <div class="row" style="margin-top:8px"><span>Bayar ({{ $sale->payment_status === 'lunas' ? 'Tunai' : 'Uang Muka/DP' }})</span><span>Rp {{ number_format($sale->amount_paid, 0, ',', '.') }}</span></div>
+    @if($sale->payment_status !== 'lunas')
     <div class="row bold" style="color:#dc2626"><span>Sisa Hutang</span><span>Rp {{ number_format(max(0,$sale->total_amount - $sale->amount_paid), 0, ',', '.') }}</span></div>
     @endif
     @if($sale->change_amount > 0)
