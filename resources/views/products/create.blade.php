@@ -63,13 +63,21 @@
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4" x-data="{ 
-            sellPrice: '{{ old('sell_price', 0) }}', 
-            retailPrice: '{{ old('retail_price', '') }}',
+            sellPrice: '{{ old('sell_price') }}', 
+            retailPrice: '{{ old('retail_price') }}',
+            basePrice: '{{ old('base_price', 0) }}',
+            updatePrices() {
+                let numBase = parseInt(this.basePrice.replace(/\D/g, '')) || 0;
+                let rStore = parseInt(document.querySelector('input[name=reward_store]')?.value?.replace(/\D/g, '')) || 500;
+                let rOwner = parseInt(document.querySelector('input[name=reward_owner]')?.value?.replace(/\D/g, '')) || 4500;
+                
+                let numSell = numBase + rStore + rOwner;
+                this.sellPrice = new Intl.NumberFormat('id-ID').format(numSell);
+                this.retailPrice = new Intl.NumberFormat('id-ID').format(numSell + 20000);
+            },
             updateRetailPrice() {
-                if (!this.retailPrice) {
-                    let numSell = parseInt(this.sellPrice.replace(/\D/g, '')) || 0;
-                    this.retailPrice = new Intl.NumberFormat('id-ID').format(numSell + 20000);
-                }
+                let numSell = parseInt(this.sellPrice.replace(/\D/g, '')) || 0;
+                this.retailPrice = new Intl.NumberFormat('id-ID').format(numSell + 20000);
             }
         }">
             <div>
@@ -77,6 +85,7 @@
                 <div class="relative">
                     <span class="absolute left-3 top-2.5 text-sm text-gray-400">Rp</span>
                     <input type="text" inputmode="numeric" name="base_price" value="{{ old('base_price', 0) }}" required
+                        x-model="basePrice" @input="updatePrices"
                         class="input-currency w-full border border-gray-300 rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 @error('base_price') border-red-500 @enderror">
                 </div>
                 @error('base_price')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
