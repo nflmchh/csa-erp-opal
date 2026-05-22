@@ -117,6 +117,10 @@ class StoreReturnController extends Controller
     {
         $this->authorize('receive store return');
 
+        if (Auth::user()->hasRole(['kepala toko', 'kasir']) && !Auth::user()->hasRole('superadmin')) {
+            abort(403, 'Aksi ini hanya dapat dilakukan oleh gudang.');
+        }
+
         if (!$return->isPending()) {
             return back()->with('error', 'Retur tidak dalam status menunggu.');
         }

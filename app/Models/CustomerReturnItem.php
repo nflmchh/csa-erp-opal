@@ -14,5 +14,5 @@ class CustomerReturnItem extends Model
     protected $casts = ['unit_price' => 'decimal:2', 'subtotal' => 'decimal:2'];
 
     public function customerReturn(): BelongsTo { return $this->belongsTo(CustomerReturn::class); }
-    public function variant(): BelongsTo        { return $this->belongsTo(ProductVariant::class, 'product_variant_id'); }
+    public function variant(): BelongsTo        { return $this->belongsTo(ProductVariant::class, 'product_variant_id')->withTrashed(); }
 }

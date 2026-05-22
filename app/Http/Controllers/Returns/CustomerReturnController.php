@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\CustomerReturn;
 use App\Models\CustomerReturnItem;
 use App\Models\ProductVariant;
+use App\Models\CashSession;
 use App\Models\ReturnReason;
 use App\Models\Sale;
 use App\Models\Store;
@@ -69,7 +70,17 @@ class CustomerReturnController extends Controller
             'items.*.condition' => 'required|in:good,damaged',
         ]);
 
-        $return = DB::transaction(function () use ($r, $store) {
+        $activeSession = CashSession::where('user_id', Auth::id())->where('status', 'open')->first();
+        if (!$activeSession) {
+            return redirect()->back()->withInput()->with('error', 'Gagal memproses retur! Anda harus membuka Sesi Kasir (Cash Session) terlebih dahulu untuk memproses refund.');
+        }
+
+        $return = DB::transaction(function () use ($r, $store, $activeSession) {
+            $totalRefund = 0;
+            foreach ($r->items as $row) {
+                $totalRefund += (float) $row['unit_price'] * (int) $row['qty'];
+            }
+
             $return = CustomerReturn::create([
                 'return_no' => ReferenceNumberService::customerReturn(),
                 'sale_id' => $r->sale_id,
@@ -80,7 +91,11 @@ class CustomerReturnController extends Controller
                 'processed_at' => now(),
                 'processed_by' => Auth::id(),
                 'created_by' => Auth::id(),
+                'cash_session_id' => $activeSession->id,
+                'refund_amount' => $totalRefund,
             ]);
+
+            $activeSession->increment('refund_amount', $totalRefund);
 
             foreach ($r->items as $row) {
                 $variant = ProductVariant::findOrFail($row['variant_id']);

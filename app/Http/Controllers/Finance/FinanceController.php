@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Finance;
 
 use App\Http\Controllers\Controller;
+use App\Models\CustomerReturn;
 use App\Models\Sale;
 use App\Models\Stock;
 use App\Models\Store;
@@ -32,20 +33,34 @@ class FinanceController extends Controller
         $monthSalesQuery = Sale::whereRaw("DATE_FORMAT(created_at, '%Y-%m') = ?", [$thisMonth]);
         $totalOrdersQuery = Sale::whereDate('created_at', $today);
 
+        $todayRefundsQuery = CustomerReturn::whereDate('created_at', $today);
+        $monthRefundsQuery = CustomerReturn::whereRaw("DATE_FORMAT(created_at, '%Y-%m') = ?", [$thisMonth]);
+
         if (!$isGlobal) {
             if (empty($storeIds)) {
                 $todaySalesQuery->whereRaw('1 = 0');
                 $monthSalesQuery->whereRaw('1 = 0');
                 $totalOrdersQuery->whereRaw('1 = 0');
+                $todayRefundsQuery->whereRaw('1 = 0');
+                $monthRefundsQuery->whereRaw('1 = 0');
             } else {
                 $todaySalesQuery->whereIn('store_id', $storeIds);
                 $monthSalesQuery->whereIn('store_id', $storeIds);
                 $totalOrdersQuery->whereIn('store_id', $storeIds);
+                $todayRefundsQuery->whereIn('store_id', $storeIds);
+                $monthRefundsQuery->whereIn('store_id', $storeIds);
             }
         }
 
-        $todaySales = $todaySalesQuery->sum('total_amount');
-        $monthSales = $monthSalesQuery->sum('total_amount');
+        $todaySalesGross = $todaySalesQuery->sum('total_amount');
+        $monthSalesGross = $monthSalesQuery->sum('total_amount');
+        
+        $todayRefunds = $todayRefundsQuery->sum('refund_amount');
+        $monthRefunds = $monthRefundsQuery->sum('refund_amount');
+
+        $todaySales = max(0, $todaySalesGross - $todayRefunds);
+        $monthSales = max(0, $monthSalesGross - $monthRefunds);
+
         $totalOrders = $totalOrdersQuery->count();
 
         $storeStockQuery = Stock::where('location_type', 'store')

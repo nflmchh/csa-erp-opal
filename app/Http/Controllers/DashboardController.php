@@ -50,7 +50,10 @@ class DashboardController extends Controller
             $storeIds = $user->stores()->pluck('stores.id');
             
             $today = now()->toDateString();
-            $todaySales = Sale::whereIn('store_id', $storeIds)->whereDate('created_at', $today)->sum('total_amount');
+            $todaySalesGross = Sale::whereIn('store_id', $storeIds)->whereDate('created_at', $today)->sum('total_amount');
+            $todayRefunds = CustomerReturn::whereIn('store_id', $storeIds)->whereDate('created_at', $today)->sum('refund_amount');
+            $todaySales = max(0, $todaySalesGross - $todayRefunds);
+            
             $todayOrders = Sale::whereIn('store_id', $storeIds)->whereDate('created_at', $today)->count();
             $todayExpense = Expense::whereIn('store_id', $storeIds)->whereDate('expense_date', $today)->sum('amount');
             $todayProfit = $todaySales - $todayExpense;
@@ -85,7 +88,9 @@ class DashboardController extends Controller
         if ($user->hasRole('finance')) {
             // Ambil metrik arus kas bulan ini
             $thisMonth = now()->format('Y-m');
-            $monthSales = Sale::whereRaw("DATE_FORMAT(created_at, '%Y-%m') = ?", [$thisMonth])->sum('total_amount');
+            $monthSalesGross = Sale::whereRaw("DATE_FORMAT(created_at, '%Y-%m') = ?", [$thisMonth])->sum('total_amount');
+            $monthRefunds = CustomerReturn::whereRaw("DATE_FORMAT(created_at, '%Y-%m') = ?", [$thisMonth])->sum('refund_amount');
+            $monthSales = max(0, $monthSalesGross - $monthRefunds);
             
             return view('dashboard.finance', compact('monthSales'));
         }
@@ -112,10 +117,22 @@ class DashboardController extends Controller
         ];
 
         // ── Financial KPIs ───────────────────────────────────
-        $todaySales     = Sale::when($storeId, fn($q) => $q->where('store_id', $storeId))->whereDate('created_at', $today)->sum('total_amount');
-        $yesterdaySales = Sale::when($storeId, fn($q) => $q->where('store_id', $storeId))->whereDate('created_at', $yesterday)->sum('total_amount');
-        $monthSales     = Sale::when($storeId, fn($q) => $q->where('store_id', $storeId))->whereRaw("DATE_FORMAT(created_at, '%Y-%m') = ?", [$thisMonth])->sum('total_amount');
-        $lastMonthSales = Sale::when($storeId, fn($q) => $q->where('store_id', $storeId))->whereRaw("DATE_FORMAT(created_at, '%Y-%m') = ?", [$lastMonth])->sum('total_amount');
+        $todaySalesGross     = Sale::when($storeId, fn($q) => $q->where('store_id', $storeId))->whereDate('created_at', $today)->sum('total_amount');
+        $todayRefunds        = CustomerReturn::when($storeId, fn($q) => $q->where('store_id', $storeId))->whereDate('created_at', $today)->sum('refund_amount');
+        $todaySales          = max(0, $todaySalesGross - $todayRefunds);
+
+        $yesterdaySalesGross = Sale::when($storeId, fn($q) => $q->where('store_id', $storeId))->whereDate('created_at', $yesterday)->sum('total_amount');
+        $yesterdayRefunds    = CustomerReturn::when($storeId, fn($q) => $q->where('store_id', $storeId))->whereDate('created_at', $yesterday)->sum('refund_amount');
+        $yesterdaySales      = max(0, $yesterdaySalesGross - $yesterdayRefunds);
+
+        $monthSalesGross     = Sale::when($storeId, fn($q) => $q->where('store_id', $storeId))->whereRaw("DATE_FORMAT(created_at, '%Y-%m') = ?", [$thisMonth])->sum('total_amount');
+        $monthRefunds        = CustomerReturn::when($storeId, fn($q) => $q->where('store_id', $storeId))->whereRaw("DATE_FORMAT(created_at, '%Y-%m') = ?", [$thisMonth])->sum('refund_amount');
+        $monthSales          = max(0, $monthSalesGross - $monthRefunds);
+
+        $lastMonthSalesGross = Sale::when($storeId, fn($q) => $q->where('store_id', $storeId))->whereRaw("DATE_FORMAT(created_at, '%Y-%m') = ?", [$lastMonth])->sum('total_amount');
+        $lastMonthRefunds    = CustomerReturn::when($storeId, fn($q) => $q->where('store_id', $storeId))->whereRaw("DATE_FORMAT(created_at, '%Y-%m') = ?", [$lastMonth])->sum('refund_amount');
+        $lastMonthSales      = max(0, $lastMonthSalesGross - $lastMonthRefunds);
+
         $todayOrders    = Sale::when($storeId, fn($q) => $q->where('store_id', $storeId))->whereDate('created_at', $today)->count();
         $monthOrders    = Sale::when($storeId, fn($q) => $q->where('store_id', $storeId))->whereRaw("DATE_FORMAT(created_at, '%Y-%m') = ?", [$thisMonth])->count();
 

@@ -11,12 +11,14 @@ class CustomerReturn extends Model
     protected $fillable = [
         'return_no', 'sale_id', 'store_id', 'return_reason_id',
         'status', 'notes', 'processed_at', 'processed_by', 'created_by',
+        'cash_session_id', 'refund_amount'
     ];
 
     protected $casts = ['processed_at' => 'datetime'];
 
     public function sale(): BelongsTo         { return $this->belongsTo(Sale::class); }
     public function store(): BelongsTo        { return $this->belongsTo(Store::class); }
+    public function cashSession(): BelongsTo  { return $this->belongsTo(CashSession::class); }
     public function reason(): BelongsTo       { return $this->belongsTo(ReturnReason::class, 'return_reason_id'); }
     public function processor(): BelongsTo    { return $this->belongsTo(User::class, 'processed_by'); }
     public function creator(): BelongsTo      { return $this->belongsTo(User::class, 'created_by'); }

@@ -81,7 +81,9 @@ class CashSessionController extends Controller
         $cashSalesTotal = $session->sales
             ->filter(fn($s) => optional($s->paymentMethod)->type === 'cash')
             ->sum('total_amount');
-        $expectedAmount = (float) $session->opening_amount + $cashSalesTotal;
+        
+        // Expected amount is Opening + Cash Sales - Cash Refunds
+        $expectedAmount = (float) $session->opening_amount + $cashSalesTotal - (float) $session->refund_amount;
 
         $session->update([
             'status'          => 'closed',
@@ -93,6 +95,6 @@ class CashSessionController extends Controller
 
         AuditLogService::log('close', 'CashSession', "Tutup sesi kasir #{$session->id}", null, null, CashSession::class, $session->id);
 
-        return redirect()->route('pos.session.index')->with('success', "Sesi ditutup. Total penjualan: Rp " . number_format($totalSales, 0, ',', '.'));
+        return redirect()->route('pos.session.index')->with('success', "Sesi ditutup. Total penjualan: Rp " . number_format($totalSales, 0, ',', '.') . " | Refund Retur: Rp " . number_format($session->refund_amount, 0, ',', '.'));
     }
 }

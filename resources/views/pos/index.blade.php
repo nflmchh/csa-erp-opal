@@ -850,8 +850,9 @@
                         const sku  = item.variant?.sku || '';
                         const color = item.variant?.color?.name || '';
                         const size = item.variant?.size?.name || '';
+                        const itemTypeLabel = item.is_ecer ? '(Ecer)' : '(Grosir)';
                         return `<div style="margin-bottom:8px">
-                            <div style="font-weight:bold;font-size:13px">${name}</div>
+                            <div style="font-weight:bold;font-size:13px">${name} <span style="font-size: 11px; color: #444;">${itemTypeLabel}</span></div>
                             <div style="font-size:11px;color:#444;margin-bottom:2px;">${sku} · ${color} / ${size}</div>
                             <div style="display:flex;justify-content:space-between">
                                 <span style="font-size:12px">@ Rp ${fmt(item.unit_price)}</span>
@@ -863,7 +864,6 @@
                     
                     let pMethod = sale.payment_method || sale.paymentMethod;
                     let pMethodName = pMethod ? pMethod.name.toUpperCase() : '-';
-                    let priceLabel = sale.price_method === 'custom' ? 'Ecer (Custom)' : (sale.price_method === 'grosir' ? 'Grosir' : 'Ecer');
                     let statusLabel = sale.payment_status.toUpperCase();
                     let statusColor = (sale.payment_status === 'lunas') ? '#16a34a' : '#dc2626';
 
@@ -938,7 +938,6 @@
                         <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span>Tgl</span><span>${formattedDate}</span></div>
                         <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span>Kasir</span><span>${sale.creator?.name||'-'}</span></div>
                         <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span>Metode</span><span>${pMethodName}</span></div>
-                        <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span>Harga</span><span>${priceLabel}</span></div>
                         <div style="display:flex;justify-content:space-between;margin-bottom:4px;color:${statusColor};font-weight:bold"><span>Status</span><span>${statusLabel}</span></div>
                         ${customerHtml}
                         ${dueDateHtml}
@@ -1082,9 +1081,6 @@
                             let pMethod = sale.payment_method || sale.paymentMethod;
                             text += alignLR("Metode:", pMethod ? pMethod.name.toUpperCase() : '-');
                             
-                            let priceLabel = sale.price_method === 'custom' ? 'Ecer (Custom)' : (sale.price_method === 'grosir' ? 'Grosir' : 'Ecer');
-                            text += alignLR("Harga:", priceLabel);
-                            
                             let statusLabel = (sale.payment_status === 'tempo') ? 'TEMPO / DP / PO' : 'LUNAS';
                             text += alignLR("Status:", statusLabel);
 
@@ -1101,7 +1097,8 @@
                             text += "------------------------------------------------\n";
 
                             sale.items.forEach(item => {
-                                text += String(item.variant.product.name).substring(0, 48) + "\n";
+                                let itemTypeLabel = item.is_ecer ? '(Ecer)' : '(Grosir)';
+                                text += String(item.variant.product.name + " " + itemTypeLabel).substring(0, 48) + "\n";
                                 let skuText = item.variant.sku + " · " + (item.variant.color ? item.variant.color.name : '') + " / " + (item.variant.size ? item.variant.size.name : '');
                                 text += String(skuText).substring(0, 48) + "\n";
                                 

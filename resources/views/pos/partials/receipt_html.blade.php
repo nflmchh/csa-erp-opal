@@ -55,11 +55,8 @@
     <div class="row"><span>Kasir</span><span>{{ $sale->creator?->name }}</span></div>
     <div class="row"><span>Metode</span><span>{{ strtoupper($sale->paymentMethod?->name) }}</span></div>
     @php
-        $priceLabels = ['system' => 'Ecer', 'grosir' => 'Grosir', 'custom' => 'Ecer (Custom)'];
-        $priceLabel  = $priceLabels[$sale->price_method ?? 'system'] ?? 'Ecer';
         $statusLabel = strtoupper($sale->payment_status);
     @endphp
-    <div class="row"><span>Harga</span><span>{{ $priceLabel }}</span></div>
     <div class="row bold" style="color: {{ $sale->payment_status === 'lunas' ? '#16a34a' : '#dc2626' }}"><span>Status</span><span>{{ $statusLabel }}</span></div>
     @if($sale->due_date)
     <div class="row"><span>Jatuh Tempo</span><span>{{ \Carbon\Carbon::parse($sale->due_date)->format('d/m/Y') }}</span></div>
@@ -84,9 +81,12 @@
     <div class="divider-solid"></div>
 
     @foreach($sale->items as $item)
-    @php $v = $item->variant; @endphp
+    @php 
+        $v = $item->variant; 
+        $itemTypeLabel = $item->is_ecer ? '(Ecer)' : '(Grosir)';
+    @endphp
     <div style="margin-bottom:8px">
-        <div class="bold" style="font-size:13px">{{ $v->product->name }}</div>
+        <div class="bold" style="font-size:13px">{{ $v->product->name }} <span style="font-size: 11px; color: #444;">{{ $itemTypeLabel }}</span></div>
         <div style="font-size:11px;color:#444;margin-bottom:2px;">{{ $v->sku }} · {{ $v->color->name }} / {{ $v->size->name }}</div>
         <div class="row">
             <span class="item-name" style="font-size:12px">@ Rp {{ number_format($item->unit_price, 0, ',', '.') }}</span>

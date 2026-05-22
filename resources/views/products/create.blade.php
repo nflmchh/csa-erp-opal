@@ -68,7 +68,7 @@
             updateRetailPrice() {
                 if (!this.retailPrice) {
                     let numSell = parseInt(this.sellPrice.replace(/\D/g, '')) || 0;
-                    this.retailPrice = new Intl.NumberFormat('id-ID').format(numSell + 10000);
+                    this.retailPrice = new Intl.NumberFormat('id-ID').format(numSell + 20000);
                 }
             }
         }">

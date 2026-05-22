@@ -56,7 +56,7 @@ class POSController extends Controller
                     'price'           => $v->sellPrice(),
                     'price_formatted' => 'Rp ' . number_format($v->sellPrice(), 0, ',', '.'),
                     'grosir_price'    => (float) $v->product->base_price,
-                    'retail_price'    => (float) ($v->product->retail_price ?? $v->sellPrice()),
+                    'retail_price'    => (float) ($v->product->retail_price ?? ($v->sellPrice() + 20000)),
                     'stock'           => $stock,
                     'image'           => $imageUrl,
                 ];
@@ -143,6 +143,7 @@ class POSController extends Controller
             'items.*.variant_id' => 'required|exists:product_variants,id',
             'items.*.qty'       => 'required|integer|min:1',
             'items.*.unit_price' => 'required|numeric|min:0',
+            'items.*.is_ecer'   => 'nullable|boolean',
         ]);
 
         $discountAmount = (float) ($r->discount_amount ?? 0);
@@ -172,7 +173,8 @@ class POSController extends Controller
                     }
 
                     $subtotal += $lineTotal;
-                    $itemsData[] = compact('variant', 'qty', 'unitPrice', 'lineTotal');
+                    $isEcer = filter_var($row['is_ecer'] ?? false, FILTER_VALIDATE_BOOLEAN);
+                    $itemsData[] = compact('variant', 'qty', 'unitPrice', 'lineTotal', 'isEcer');
                 }
 
                 $totalAmount = max(0, $subtotal - $discountAmount);
@@ -205,6 +207,13 @@ class POSController extends Controller
                 ]);
 
                 foreach ($itemsData as $item) {
+                    $baseRewardOwner = (float) ($item['variant']->product->reward_owner ?? 4500);
+                    
+                    if ($item['isEcer']) {
+                        $marginEcer = max(0, $item['unitPrice'] - $item['variant']->sellPrice());
+                        $baseRewardOwner += $marginEcer;
+                    }
+
                     SaleItem::create([
                         'sale_id' => $sale->id,
                         'product_variant_id' => $item['variant']->id,
@@ -212,7 +221,8 @@ class POSController extends Controller
                         'unit_price' => $item['unitPrice'],
                         'subtotal' => $item['lineTotal'],
                         'reward_store' => ($item['variant']->product->reward_store ?? 500) * $item['qty'],
-                        'reward_owner' => ($item['variant']->product->reward_owner ?? 4500) * $item['qty'],
+                        'reward_owner' => $baseRewardOwner * $item['qty'],
+                        'is_ecer' => $item['isEcer'],
                     ]);
 
                     StockService::mutate(
@@ -333,7 +343,7 @@ class POSController extends Controller
                     'price' => $v->sellPrice(),
                     'price_formatted' => 'Rp ' . number_format($v->sellPrice(), 0, ',', '.'),
                     'grosir_price' => (float) $v->product->base_price,
-                    'retail_price' => (float) ($v->product->retail_price ?? $v->sellPrice()),
+                    'retail_price' => (float) ($v->product->retail_price ?? ($v->sellPrice() + 20000)),
                     'stock' => $stock,
                 ];
             });

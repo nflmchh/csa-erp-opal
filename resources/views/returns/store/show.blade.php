@@ -60,6 +60,7 @@
     {{-- RECEIVE action --}}
     @if($return->isPending())
         @can('receive store return')
+        @if(!auth()->user()->hasRole(['kepala toko', 'kasir']) || auth()->user()->hasRole('superadmin'))
         <div class="bg-white rounded-xl border border-gray-200 p-5">
             <h2 class="text-sm font-semibold text-gray-700 mb-3">Konfirmasi Penerimaan</h2>
             <p class="text-xs text-gray-500 mb-4">Tandai bahwa gudang telah menerima barang retur dari toko.</p>
@@ -71,6 +72,7 @@
                 </button>
             </form>
         </div>
+        @endif
         @endcan
     @endif
 
