@@ -34,6 +34,11 @@ class ProductVariant extends Model
         return (float) $this->product->sell_price + (float) $this->price_adjustment;
     }
 
+    public function retailPrice(): float
+    {
+        return (float) ($this->product->retail_price ?? $this->product->sell_price) + (float) $this->price_adjustment;
+    }
+
     public function totalStock(): int
     {
         return $this->stocks->sum('qty');

@@ -35,12 +35,17 @@ class DashboardController extends Controller
             $totalWarehouseStock = Stock::where('location_type', 'warehouse')->whereIn('location_id', $warehouseIds)->sum('qty');
             $todayExpense = Expense::whereIn('warehouse_id', $warehouseIds)->whereDate('expense_date', $today)->sum('amount');
             
-            // TAMBAHAN: Ambil 10 produk terbaru (semua produk)
             $products = Product::with(['brand', 'category', 'images', 'variants.stocks' => function($q) use ($warehouseIds) {
                 $q->where('location_type', 'warehouse')->whereIn('location_id', $warehouseIds);
             }])->latest()->take(10)->get();
+
+            $latestOpname = \App\Models\StockOpname::with(['items.variant.product', 'items.variant.color', 'items.variant.size', 'creator'])
+                ->where('location_type', 'warehouse')
+                ->whereIn('location_id', $warehouseIds)
+                ->latest()
+                ->first();
             
-            return view('dashboard.warehouse', compact('lowStock', 'totalWarehouseStock', 'todayExpense', 'products'));
+            return view('dashboard.warehouse', compact('lowStock', 'totalWarehouseStock', 'todayExpense', 'products', 'latestOpname'));
         }
 
         // ====================================================================
@@ -79,7 +84,13 @@ class DashboardController extends Controller
                 ->limit(5)
                 ->get();
             
-            return view('dashboard.store', compact('todaySales', 'todayOrders', 'todayExpense', 'todayProfit', 'products', 'approachingDueSales'));
+            $latestOpname = \App\Models\StockOpname::with(['items.variant.product', 'items.variant.color', 'items.variant.size', 'creator'])
+                ->where('location_type', 'store')
+                ->whereIn('location_id', $storeIds)
+                ->latest()
+                ->first();
+            
+            return view('dashboard.store', compact('todaySales', 'todayOrders', 'todayExpense', 'todayProfit', 'products', 'approachingDueSales', 'latestOpname'));
         }
 
         // ====================================================================
@@ -287,6 +298,14 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
 
+        $warehouseId = $request->query('warehouse_id');
+
+        $latestOpname = \App\Models\StockOpname::with(['items.variant.product', 'items.variant.color', 'items.variant.size', 'creator'])
+            ->when($storeId, fn($q) => $q->where('location_type', 'store')->where('location_id', $storeId))
+            ->when($warehouseId, fn($q) => $q->where('location_type', 'warehouse')->where('location_id', $warehouseId))
+            ->latest()
+            ->first();
+
         // Mengembalikan View aslinya (Super Admin Dashboard)
         return view('dashboard.index', compact(
             'stores', 'storeId', 'storeDateFilter', 'topDateFilter',
@@ -300,7 +319,7 @@ class DashboardController extends Controller
             'monthReturns', 'pendingReturns',
             // PASTIKAN VARIABEL INI DITAMBAHKAN KE DALAM COMPACT:
             'totalItemsSold', 'rewardToko', 'rewardOwner', 'totalExpense', 'todayExpense', 'todayProfit',
-            'approachingDueSales'
+            'approachingDueSales', 'latestOpname'
         ));
     }
 }

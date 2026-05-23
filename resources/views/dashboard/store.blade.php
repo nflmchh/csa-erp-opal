@@ -157,6 +157,78 @@
             </div>
         </div>
     </div>
+
+    {{-- Latest Stock Opname Card --}}
+    @if(isset($latestOpname) && $latestOpname)
+    <div x-data="{ openOpnameModal: false }" x-init="$watch('openOpnameModal', val => document.body.style.overflow = val ? 'hidden' : '')" class="mt-4">
+        <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between group cursor-pointer hover:border-indigo-300 transition-colors" @click="openOpnameModal = true">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                </div>
+                <div>
+                    <h3 class="font-bold text-gray-800 text-sm">Stock Opname Terbaru</h3>
+                    <p class="text-xs text-gray-500 mt-1">No. <span class="font-mono text-indigo-600 font-semibold">{{ $latestOpname->opname_no }}</span> · {{ $latestOpname->created_at->format('d/m/Y H:i') }}</p>
+                </div>
+            </div>
+            <div class="text-right">
+                @php
+                    $statusColors = ['draft'=>'bg-gray-100 text-gray-600','submitted'=>'bg-blue-100 text-blue-700','approved'=>'bg-green-100 text-green-700','rejected'=>'bg-red-100 text-red-700'];
+                    $statusLabels = ['draft'=>'Draft','submitted'=>'Disubmit','approved'=>'Disetujui','rejected'=>'Ditolak'];
+                @endphp
+                <span class="inline-block px-2.5 py-1 rounded-full text-xs font-bold {{ $statusColors[$latestOpname->status] ?? 'bg-gray-100 text-gray-600' }}">{{ $statusLabels[$latestOpname->status] ?? $latestOpname->status }}</span>
+                <p class="text-[10px] text-gray-400 mt-1 group-hover:text-indigo-500">Klik untuk detail &rarr;</p>
+            </div>
+        </div>
+
+        {{-- Modal --}}
+        <template x-teleport="body">
+            <div x-show="openOpnameModal" style="display:none" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4 py-6" x-transition.opacity>
+                <div @click.away="openOpnameModal = false" class="bg-white rounded-2xl shadow-xl w-full max-w-3xl flex flex-col overflow-hidden" style="max-height: 85vh;" x-transition.scale.origin.bottom>
+                <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50 shrink-0">
+                    <div>
+                        <h3 class="font-bold text-gray-800 text-lg">Detail Stock Opname <span class="font-mono text-indigo-600 text-base ml-2">{{ $latestOpname->opname_no }}</span></h3>
+                        <p class="text-xs text-gray-500 mt-1">Lokasi: {{ $latestOpname->location_type === 'store' ? 'Toko' : 'Gudang' }} · Dibuat oleh: {{ $latestOpname->creator->name ?? '-' }}</p>
+                    </div>
+                    <button type="button" @click="openOpnameModal = false" class="text-gray-400 hover:text-gray-600 p-2 rounded-lg hover:bg-gray-100 transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+                <div class="p-0 overflow-y-auto flex-1 min-h-0">
+                    <table class="w-full text-sm text-left">
+                        <thead class="bg-gray-50 text-gray-500 uppercase text-[10px] tracking-wider sticky top-0 shadow-sm">
+                            <tr>
+                                <th class="px-6 py-3">SKU</th>
+                                <th class="px-6 py-3">Produk</th>
+                                <th class="px-6 py-3 text-right">Sistem</th>
+                                <th class="px-6 py-3 text-right">Aktual</th>
+                                <th class="px-6 py-3 text-right">Selisih</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            @foreach($latestOpname->items as $item)
+                                @php $v = $item->variant; $diff = $item->qty_difference; @endphp
+                                <tr class="hover:bg-gray-50 {{ $diff !== null && $diff != 0 ? 'bg-yellow-50/30' : '' }}">
+                                    <td class="px-6 py-3 font-mono text-xs">{{ $v->sku }}</td>
+                                    <td class="px-6 py-3 text-xs">{{ $v->product->name }} · {{ $v->color->name }}/{{ $v->size->name }}</td>
+                                    <td class="px-6 py-3 text-right font-semibold text-gray-700">{{ $item->qty_system }}</td>
+                                    <td class="px-6 py-3 text-right text-gray-700">{{ $item->qty_actual ?? '-' }}</td>
+                                    <td class="px-6 py-3 text-right font-bold {{ $diff === null ? 'text-gray-400' : ($diff > 0 ? 'text-green-600' : ($diff < 0 ? 'text-red-600' : 'text-gray-500')) }}">
+                                        {{ $diff !== null ? ($diff > 0 ? '+'.$diff : $diff) : '-' }}
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+                <div class="px-6 py-4 border-t border-gray-100 bg-gray-50 flex justify-end items-center gap-3 shrink-0">
+                    <a href="{{ route('opname.show', $latestOpname) }}" class="text-sm text-indigo-600 hover:text-indigo-800 font-semibold px-4 py-2">Buka Halaman Opname &rarr;</a>
+                    <button type="button" @click="openOpnameModal = false" class="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-lg text-sm font-semibold transition-colors">Tutup</button>
+                </div>
+            </div>
+        </template>
+    </div>
+    @endif
 </div>
 <div class="mt-8 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">

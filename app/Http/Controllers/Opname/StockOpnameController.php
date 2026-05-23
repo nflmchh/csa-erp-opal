@@ -108,6 +108,7 @@ class StockOpnameController extends Controller
             'items'              => 'required|array',
             'items.*.id'         => 'required|exists:stock_opname_items,id',
             'items.*.qty_actual' => 'required|integer|min:0',
+            'items.*.is_ecer'    => 'nullable|boolean',
         ]);
 
         DB::transaction(function () use ($r, $opname) {
@@ -117,6 +118,7 @@ class StockOpnameController extends Controller
                 $item->update([
                     'qty_actual'     => $qtyActual,
                     'qty_difference' => $qtyActual - $item->qty_system,
+                    'is_ecer'        => isset($row['is_ecer']) ? filter_var($row['is_ecer'], FILTER_VALIDATE_BOOLEAN) : false,
                 ]);
             }
 

@@ -82,27 +82,61 @@
                             <tr>
                                 <th class="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase">SKU</th>
                                 <th class="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase">Produk</th>
+                                @if($opname->location_type === 'store')
+                                <th class="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase">Tipe Harga</th>
+                                @endif
+                                <th class="text-right px-4 py-3 text-xs font-semibold text-gray-600 uppercase">Harga Satuan</th>
                                 <th class="text-right px-4 py-3 text-xs font-semibold text-gray-600 uppercase">Qty Sistem</th>
+                                <th class="text-right px-4 py-3 text-xs font-semibold text-gray-600 uppercase">Total Sistem</th>
                                 <th class="text-right px-4 py-3 text-xs font-semibold text-gray-600 uppercase">Qty Aktual</th>
+                                <th class="text-right px-4 py-3 text-xs font-semibold text-gray-600 uppercase">Harga Aktual</th>
+                                <th class="text-right px-4 py-3 text-xs font-semibold text-gray-600 uppercase">Selisih Harga</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-100">
                             @foreach($opname->items as $i => $item)
-                            @php $v = $item->variant; @endphp
+                            @php 
+                                $v = $item->variant; 
+                                $sellPrice = $v->sellPrice();
+                                $retailPrice = $v->retailPrice();
+                                $hasSales = $opname->location_type === 'store' ? \App\Models\SaleItem::where('product_variant_id', $v->id)->whereHas('sale', function($q) use ($opname) {
+                                    $q->where('store_id', $opname->location_id)->where('created_at', '>', $opname->created_at);
+                                })->exists() : false;
+                            @endphp
                             <input type="hidden" name="items[{{ $i }}][id]" value="{{ $item->id }}">
-                            <tr>
+                            <tr class="item-row" data-sell-price="{{ $sellPrice }}" data-retail-price="{{ $retailPrice }}" data-sys-qty="{{ $item->qty_system }}">
                                 <td class="px-4 py-2 font-mono text-xs text-gray-700">{{ $v->sku }}</td>
-                                <td class="px-4 py-2 text-xs text-gray-700">{{ $v->product->name }} · {{ $v->color->name }} / {{ $v->size->name }}</td>
-                                <td class="px-4 py-2 text-right text-xs font-semibold text-gray-700">{{ $item->qty_system }}</td>
+                                <td class="px-4 py-2 text-xs text-gray-700">
+                                    {{ $v->product->name }} · {{ $v->color->name }} / {{ $v->size->name }}
+                                </td>
+                                @if($opname->location_type === 'store')
+                                <td class="px-4 py-2 text-xs">
+                                    <select name="items[{{ $i }}][is_ecer]" class="price-type-select text-xs border border-gray-300 rounded px-2 py-1 w-20 bg-gray-50 text-gray-700 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                                        <option value="0" {{ (old("items.$i.is_ecer", $item->is_ecer) == 0) ? 'selected' : '' }}>Grosir</option>
+                                        <option value="1" {{ (old("items.$i.is_ecer", $item->is_ecer) == 1) ? 'selected' : '' }}>Ecer</option>
+                                    </select>
+                                </td>
+                                @endif
+                                <td class="px-4 py-2 text-right text-xs text-gray-600">Rp <span class="format-price actual-unit-price">{{ number_format($sellPrice, 0, ',', '.') }}</span></td>
+                                <td class="px-4 py-2 text-right text-xs font-semibold {{ $hasSales ? 'text-green-600' : 'text-gray-700' }}">{{ $item->qty_system }}</td>
+                                <td class="px-4 py-2 text-right text-xs text-gray-600 font-semibold">Rp <span class="format-price actual-sys-total">{{ number_format($item->qty_system * $sellPrice, 0, ',', '.') }}</span></td>
                                 <td class="px-4 py-2 text-right">
                                     <input type="number" name="items[{{ $i }}][qty_actual]"
                                         value="{{ old('items.' . $i . '.qty_actual', $item->qty_actual ?? '') }}"
                                         min="0" required
-                                        class="w-20 border border-gray-300 rounded-lg px-2 py-1 text-sm text-right focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                        class="qty-input w-20 border border-gray-300 rounded-lg px-2 py-1 text-sm text-right focus:outline-none focus:ring-2 focus:ring-indigo-500">
                                 </td>
+                                <td class="px-4 py-2 text-right text-xs font-medium text-gray-700">Rp <span class="actual-price-display">0</span></td>
+                                <td class="px-4 py-2 text-right text-xs font-bold diff-price-display text-gray-500">Rp 0</td>
                             </tr>
                             @endforeach
                         </tbody>
+                        <tfoot class="bg-gray-50 border-t border-gray-200">
+                            <tr>
+                                <td colspan="{{ $opname->location_type === 'store' ? 8 : 7 }}" class="px-4 py-3 text-right text-xs font-bold text-gray-700">Total Selisih Harga:</td>
+                                <td class="px-4 py-3 text-right text-sm font-black text-gray-800" id="total-diff-display">Rp 0</td>
+                            </tr>
+                        </tfoot>
                     </table>
                 </div>
             </div>
@@ -182,18 +216,43 @@
                     <tr>
                         <th class="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase">SKU</th>
                         <th class="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase">Produk</th>
+                        @if($opname->location_type === 'store')
+                        <th class="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase">Tipe Harga</th>
+                        @endif
+                        <th class="text-right px-4 py-3 text-xs font-semibold text-gray-600 uppercase">Harga Satuan</th>
                         <th class="text-right px-4 py-3 text-xs font-semibold text-gray-600 uppercase">Qty Sistem</th>
+                        <th class="text-right px-4 py-3 text-xs font-semibold text-gray-600 uppercase">Total Sistem</th>
                         <th class="text-right px-4 py-3 text-xs font-semibold text-gray-600 uppercase">Qty Aktual</th>
-                        <th class="text-right px-4 py-3 text-xs font-semibold text-gray-600 uppercase">Selisih</th>
+                        <th class="text-right px-4 py-3 text-xs font-semibold text-gray-600 uppercase">Selisih Qty</th>
+                        <th class="text-right px-4 py-3 text-xs font-semibold text-gray-600 uppercase">Selisih Harga</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
+                    @php $totalDiffPrice = 0; @endphp
                     @foreach($opname->items as $item)
-                    @php $v = $item->variant; $diff = $item->qty_difference; @endphp
+                    @php 
+                        $v = $item->variant; 
+                        $diff = $item->qty_difference; 
+                        $activePrice = $item->is_ecer ? $v->retailPrice() : $v->sellPrice();
+                        $diffPrice = $diff !== null ? $diff * $activePrice : 0;
+                        $totalDiffPrice += $diffPrice;
+                        $hasSales = $opname->location_type === 'store' ? \App\Models\SaleItem::where('product_variant_id', $v->id)->whereHas('sale', function($q) use ($opname) {
+                            $q->where('store_id', $opname->location_id)->where('created_at', '>', $opname->created_at);
+                        })->exists() : false;
+                    @endphp
                     <tr class="{{ $diff !== null && $diff != 0 ? 'bg-yellow-50' : '' }}">
                         <td class="px-4 py-2 font-mono text-xs text-gray-700">{{ $v->sku }}</td>
-                        <td class="px-4 py-2 text-xs text-gray-700">{{ $v->product->name }} · {{ $v->color->name }} / {{ $v->size->name }}</td>
-                        <td class="px-4 py-2 text-right text-xs text-gray-700">{{ $item->qty_system }}</td>
+                        <td class="px-4 py-2 text-xs text-gray-700">
+                            {{ $v->product->name }} · {{ $v->color->name }} / {{ $v->size->name }}
+                        </td>
+                        @if($opname->location_type === 'store')
+                        <td class="px-4 py-2 text-xs font-semibold text-gray-500">
+                            {{ $item->is_ecer ? 'Ecer' : 'Grosir' }}
+                        </td>
+                        @endif
+                        <td class="px-4 py-2 text-right text-xs text-gray-600">Rp {{ number_format($activePrice, 0, ',', '.') }}</td>
+                        <td class="px-4 py-2 text-right text-xs font-semibold {{ $hasSales ? 'text-green-600' : 'text-gray-700' }}">{{ $item->qty_system }}</td>
+                        <td class="px-4 py-2 text-right text-xs font-semibold text-gray-600">Rp {{ number_format($item->qty_system * $activePrice, 0, ',', '.') }}</td>
                         <td class="px-4 py-2 text-right text-xs text-gray-700">{{ $item->qty_actual ?? '—' }}</td>
                         <td class="px-4 py-2 text-right text-xs font-semibold
                             {{ $diff === null ? 'text-gray-400' : ($diff > 0 ? 'text-green-600' : ($diff < 0 ? 'text-red-600' : 'text-gray-500')) }}">
@@ -203,9 +262,24 @@
                                 —
                             @endif
                         </td>
+                        <td class="px-4 py-2 text-right text-xs font-bold {{ $diffPrice > 0 ? 'text-green-600' : ($diffPrice < 0 ? 'text-red-600' : 'text-gray-500') }}">
+                            @if($diff !== null)
+                                {{ $diffPrice > 0 ? '+' : '' }}Rp {{ number_format($diffPrice, 0, ',', '.') }}
+                            @else
+                                —
+                            @endif
+                        </td>
                     </tr>
                     @endforeach
                 </tbody>
+                <tfoot class="bg-gray-50 border-t border-gray-200">
+                    <tr>
+                        <td colspan="{{ $opname->location_type === 'store' ? 8 : 7 }}" class="px-4 py-3 text-right text-xs font-bold text-gray-700">Total Selisih Harga:</td>
+                        <td class="px-4 py-3 text-right text-sm font-black {{ $totalDiffPrice > 0 ? 'text-green-600' : ($totalDiffPrice < 0 ? 'text-red-600' : 'text-gray-800') }}">
+                            {{ $totalDiffPrice > 0 ? '+' : '' }}Rp {{ number_format($totalDiffPrice, 0, ',', '.') }}
+                        </td>
+                    </tr>
+                </tfoot>
             </table>
         </div>
     </div>
@@ -214,3 +288,89 @@
 
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const rows = document.querySelectorAll('.item-row');
+        const totalDiffDisplay = document.getElementById('total-diff-display');
+
+        function formatIDR(number) {
+            return new Intl.NumberFormat('id-ID').format(number);
+        }
+
+        function updateCalculations() {
+            let totalDiffPrice = 0;
+
+            rows.forEach(row => {
+                const qtyInput = row.querySelector('.qty-input');
+                const priceTypeSelect = row.querySelector('.price-type-select');
+                const unitPriceDisplay = row.querySelector('.actual-unit-price');
+                const sysTotalDisplay = row.querySelector('.actual-sys-total');
+                const actualDisplay = row.querySelector('.actual-price-display');
+                const diffDisplay = row.querySelector('.diff-price-display');
+                
+                const isEcer = priceTypeSelect ? (priceTypeSelect.value === '1') : false;
+                const sellPrice = parseFloat(row.getAttribute('data-sell-price')) || 0;
+                const retailPrice = parseFloat(row.getAttribute('data-retail-price')) || 0;
+                const price = isEcer ? retailPrice : sellPrice;
+                
+                const sysQty = parseInt(row.getAttribute('data-sys-qty')) || 0;
+                
+                if (unitPriceDisplay) unitPriceDisplay.textContent = formatIDR(price);
+                if (sysTotalDisplay) sysTotalDisplay.textContent = formatIDR(sysQty * price);
+                
+                if (qtyInput.value === '') {
+                    actualDisplay.textContent = '0';
+                    diffDisplay.textContent = 'Rp 0';
+                    diffDisplay.className = 'px-4 py-2 text-right text-xs font-bold diff-price-display text-gray-500';
+                    return;
+                }
+
+                const actualQty = parseInt(qtyInput.value) || 0;
+                
+                const actualPrice = actualQty * price;
+                const diffQty = actualQty - sysQty;
+                const diffPrice = diffQty * price;
+
+                totalDiffPrice += diffPrice;
+
+                actualDisplay.textContent = formatIDR(actualPrice);
+                
+                const sign = diffPrice > 0 ? '+' : '';
+                diffDisplay.textContent = sign + 'Rp ' + formatIDR(diffPrice);
+                
+                if (diffPrice > 0) {
+                    diffDisplay.className = 'px-4 py-2 text-right text-xs font-bold diff-price-display text-green-600';
+                } else if (diffPrice < 0) {
+                    diffDisplay.className = 'px-4 py-2 text-right text-xs font-bold diff-price-display text-red-600';
+                } else {
+                    diffDisplay.className = 'px-4 py-2 text-right text-xs font-bold diff-price-display text-gray-500';
+                }
+            });
+
+            const totalSign = totalDiffPrice > 0 ? '+' : '';
+            totalDiffDisplay.textContent = totalSign + 'Rp ' + formatIDR(totalDiffPrice);
+            
+            if (totalDiffPrice > 0) {
+                totalDiffDisplay.className = 'px-4 py-3 text-right text-sm font-black text-green-600';
+            } else if (totalDiffPrice < 0) {
+                totalDiffDisplay.className = 'px-4 py-3 text-right text-sm font-black text-red-600';
+            } else {
+                totalDiffDisplay.className = 'px-4 py-3 text-right text-sm font-black text-gray-800';
+            }
+        }
+
+        rows.forEach(row => {
+            const qtyInput = row.querySelector('.qty-input');
+            const priceTypeSelect = row.querySelector('.price-type-select');
+            
+            if (qtyInput) qtyInput.addEventListener('input', updateCalculations);
+            if (priceTypeSelect) priceTypeSelect.addEventListener('change', updateCalculations);
+        });
+
+        // Initial calculation if there are old values
+        updateCalculations();
+    });
+</script>
+@endpush
