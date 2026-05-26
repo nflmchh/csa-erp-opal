@@ -32,8 +32,8 @@ class POSController extends Controller
         $paymentMethods = \App\Models\PaymentMethod::where('is_active', true)->orderBy('sort_order')->get();
         $store = $session->store;
 
-        // TAMBAHKAN 'product.images' PADA QUERY DI BAWAH
-        $catalog = \App\Models\ProductVariant::with(['product.brand', 'color', 'size', 'product.images'])
+        // TAMBAHKAN 'product.images' dan 'image' PADA QUERY DI BAWAH
+        $catalog = \App\Models\ProductVariant::with(['product.brand', 'color', 'size', 'product.images', 'image'])
             ->where('is_active', true)
             ->whereHas('product', fn($q) => $q->where('is_active', true))
             ->get()
@@ -45,8 +45,8 @@ class POSController extends Controller
                 
                 $stock = $stockRecord ? $stockRecord->qty : 0;
 
-                // AMBIL DATA GAMBAR (Gambar utama atau gambar pertama)
-                $image = $v->product->images->where('is_primary', true)->first() ?? $v->product->images->first();
+                // AMBIL DATA GAMBAR (Gambar varian, gambar utama, atau gambar pertama)
+                $image = $v->image ?? $v->product->images->where('is_primary', true)->first() ?? $v->product->images->first();
                 $imageUrl = $image ? asset('storage/' . $image->path) : 'https://via.placeholder.com/300x300.png?text=No+Image';
 
                 return [
@@ -318,7 +318,7 @@ class POSController extends Controller
             return response()->json([]);
         }
 
-        $variants = ProductVariant::with(['product.brand', 'color', 'size'])
+        $variants = ProductVariant::with(['product.brand', 'color', 'size', 'product.images', 'image'])
             ->where('is_active', true)
             ->whereHas('product', fn($q) => $q->where('is_active', true))
             ->where(
@@ -336,6 +336,9 @@ class POSController extends Controller
                 
                 $stock = $stockRecord ? $stockRecord->qty : 0;
 
+                $image = $v->image ?? $v->product->images->where('is_primary', true)->first() ?? $v->product->images->first();
+                $imageUrl = $image ? asset('storage/' . $image->path) : 'https://via.placeholder.com/300x300.png?text=No+Image';
+
                 return [
                     'id' => $v->id,
                     'sku' => $v->sku,
@@ -345,6 +348,7 @@ class POSController extends Controller
                     'grosir_price' => (float) $v->product->base_price,
                     'retail_price' => (float) ($v->product->retail_price ?? ($v->sellPrice() + 20000)),
                     'stock' => $stock,
+                    'image' => $imageUrl,
                 ];
             });
 

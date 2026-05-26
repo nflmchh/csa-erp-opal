@@ -174,6 +174,7 @@ class InboundController extends Controller
                 return [
                     'id'    => $v->id,
                     'sku'   => $v->sku,
+                    'name'  => $v->product->name . ' · ' . $v->color->name . ' / ' . $v->size->name,
                     'label' => $v->product->name . ' · ' . $v->color->name . ' / ' . $v->size->name,
                     'price' => $v->sellPrice(),
                     'stock' => $stock,

@@ -93,9 +93,9 @@
                                     autocomplete="off">
                             </div>
                         </div>
-                        <div id="check-icon" class="text-green-500 opacity-0 transition-opacity">
-                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
-                        </div>
+                        <button type="button" id="manual-verify-btn" disabled class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg opacity-0 transition-opacity cursor-pointer disabled:cursor-not-allowed shadow-sm">
+                             OK
+                        </button>
                     </div>
                 </div>
 
@@ -121,16 +121,26 @@
         const expectedSuffix = "{{ $expectedSuffix }}";
 
         const manualInput = document.getElementById('manual-suffix-input');
-        const checkIcon = document.getElementById('check-icon');
+        const checkIcon = document.getElementById('manual-verify-btn');
 
         if (manualInput) {
             manualInput.addEventListener('input', function() {
                 if (this.value === expectedSuffix) {
                     checkIcon.classList.remove('opacity-0');
                     checkIcon.classList.add('opacity-100');
+                    checkIcon.disabled = false;
                 } else {
                     checkIcon.classList.add('opacity-0');
                     checkIcon.classList.remove('opacity-100');
+                    checkIcon.disabled = true;
+                }
+            });
+
+            checkIcon.addEventListener('click', function() {
+                if (manualInput.value === expectedSuffix) {
+                    if (confirm('Konfirmasi penerimaan barang?')) {
+                        document.getElementById('receipt-form').submit();
+                    }
                 }
             });
         }

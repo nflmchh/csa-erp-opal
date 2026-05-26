@@ -15,10 +15,7 @@
                 <input type="text" name="code" value="{{ old('code', $size->code ?? '') }}" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500" maxlength="10">
                 <p class="text-xs text-gray-400 mt-1">Digunakan pada SKU produk</p>
             </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Urutan Tampil</label>
-                <input type="number" name="sort_order" value="{{ old('sort_order', $size->sort_order ?? 0) }}" min="0" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
-            </div>
+
             <div class="flex items-center gap-2">
                 <input type="hidden" name="is_active" value="0">
                 <input type="checkbox" name="is_active" id="is_active" value="1" {{ old('is_active', $size->is_active ?? true) ? 'checked' : '' }} class="w-4 h-4 text-indigo-600 rounded border-gray-300">

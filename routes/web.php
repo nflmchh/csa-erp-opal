@@ -71,6 +71,7 @@ Route::middleware(['auth', 'active.user'])->group(function () {
         Route::resource('categories', CategoryController::class)->except(['show']);
         Route::resource('product-types', ProductTypeController::class)->except(['show']);
         Route::resource('colors', ColorController::class)->except(['show']);
+        Route::post('sizes/reorder', [SizeController::class, 'reorder'])->name('sizes.reorder');
         Route::resource('sizes', SizeController::class)->except(['show']);
         Route::resource('warehouses', WarehouseController::class)->except(['show']);
         Route::resource('stores', StoreController::class)->except(['show']);

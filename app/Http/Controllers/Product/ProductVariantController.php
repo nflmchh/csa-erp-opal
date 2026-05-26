@@ -21,7 +21,8 @@ class ProductVariantController extends Controller
         $product->load('images');
 
         // Ambil data varian yang sudah ada untuk produk ini agar bisa difilter di view
-        $existingVariants = $product->variants()->withTrashed()->get(['color_id', 'size_id']);
+        // Jangan sertakan yang sudah dihapus agar ukuran/warna bisa dipilih kembali
+        $existingVariants = $product->variants()->get(['color_id', 'size_id']);
 
         $colors = Color::orderBy('name')->get();
         $sizes  = Size::orderBy('sort_order')->get();
@@ -57,14 +58,25 @@ class ProductVariantController extends Controller
             $sizeIds = $colorSizes[$colorId] ?? [];
 
             foreach ($sizeIds as $sizeId) {
-                $exists = ProductVariant::withTrashed()
+                $existingVariant = ProductVariant::withTrashed()
                     ->where('product_id', $product->id)
                     ->where('color_id', $colorId)
                     ->where('size_id', $sizeId)
-                    ->exists();
+                    ->first();
 
-                if ($exists) {
-                    $skipped++;
+                if ($existingVariant) {
+                    if ($existingVariant->trashed()) {
+                        $existingVariant->restore();
+                        $existingVariant->update([
+                            'product_image_id' => $imageId,
+                            'is_active' => true
+                        ]);
+                        AuditLogService::log('restore', 'products', "Varian {$existingVariant->sku} dipulihkan",
+                            null, $existingVariant->toArray(), ProductVariant::class, $existingVariant->id);
+                        $created++;
+                    } else {
+                        $skipped++;
+                    }
                     continue;
                 }
 

@@ -30,11 +30,14 @@ class SizeController extends Controller
         $this->authorize('create master');
         $validated = $request->validate([
             'name'       => ['required', 'string', 'max:10'],
-            'code'       => ['required', 'string', 'max:10', \Illuminate\Validation\Rule::unique('sizes')->whereNull('deleted_at')],
+            'code'       => ['required', 'string', 'max:10', \Illuminate\Validation\Rule::unique('sizes')],
             'sort_order' => ['integer', 'min:0'],
             'is_active'  => ['boolean'],
         ]);
         $validated['is_active'] = $request->boolean('is_active', true);
+        if (!isset($validated['sort_order']) || is_null($validated['sort_order'])) {
+            $validated['sort_order'] = Size::max('sort_order') + 1;
+        }
         $size = Size::create($validated);
         AuditLogService::log('create', 'sizes', "Ukuran '{$size->name}' dibuat");
         return redirect()->route('master.sizes.index')->with('success', "Ukuran '{$size->name}' berhasil ditambahkan.");
@@ -66,5 +69,20 @@ class SizeController extends Controller
         $name = $size->name;
         $size->delete();
         return redirect()->route('master.sizes.index')->with('success', "Ukuran '{$name}' berhasil dihapus.");
+    }
+
+    public function reorder(Request $request)
+    {
+        $this->authorize('update master');
+        $request->validate([
+            'ordered_ids' => 'required|array',
+            'ordered_ids.*' => 'integer|exists:sizes,id',
+        ]);
+
+        foreach ($request->ordered_ids as $index => $id) {
+            Size::where('id', $id)->update(['sort_order' => $index + 1]);
+        }
+
+        return response()->json(['success' => true]);
     }
 }

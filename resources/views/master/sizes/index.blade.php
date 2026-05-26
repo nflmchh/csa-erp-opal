@@ -12,6 +12,7 @@
         <table class="w-full text-sm">
             <thead class="bg-gray-50 border-b border-gray-200">
                 <tr>
+                    <th class="w-10"></th>
                     <th class="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase">No</th>
                     <th class="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase">Kode</th>
                     <th class="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase">Nama</th>
@@ -20,9 +21,12 @@
                     <th class="text-right px-4 py-3 text-xs font-semibold text-gray-600 uppercase">Aksi</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-gray-100">
+            <tbody class="divide-y divide-gray-100" id="sortable-tbody">
                 @forelse($sizes as $size)
-                <tr class="hover:bg-gray-50">
+                <tr class="hover:bg-gray-50" data-id="{{ $size->id }}">
+                    <td class="px-4 py-3 text-center">
+                        <svg class="w-5 h-5 text-gray-400 cursor-move sort-handle" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"/></svg>
+                    </td>
                     <td class="px-4 py-3 text-gray-500">{{ $sizes->firstItem() + $loop->index }}</td>
                     <td class="px-4 py-3"><span class="bg-gray-100 text-gray-700 px-2 py-0.5 rounded font-mono text-xs">{{ $size->code }}</span></td>
                     <td class="px-4 py-3 font-medium text-gray-900">{{ $size->name }}</td>
@@ -36,7 +40,7 @@
                     </td>
                 </tr>
                 @empty
-                <tr><td colspan="6" class="px-4 py-12 text-center text-gray-400">Belum ada data ukuran</td></tr>
+                <tr><td colspan="7" class="px-4 py-12 text-center text-gray-400">Belum ada data ukuran</td></tr>
                 @endforelse
             </tbody>
         </table>
@@ -44,3 +48,40 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var el = document.getElementById('sortable-tbody');
+        if (el) {
+            Sortable.create(el, {
+                handle: '.sort-handle',
+                animation: 150,
+                onEnd: function (evt) {
+                    let orderedIds = Array.from(el.children).map(tr => tr.getAttribute('data-id')).filter(id => id);
+                    if (orderedIds.length === 0) return;
+
+                    fetch('{{ route('master.sizes.reorder') }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({ ordered_ids: orderedIds })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if(data.success) {
+                            // Optional: reload the page to refresh "No" and "Urutan" columns, or let them just stay as is.
+                            window.location.reload();
+                        }
+                    })
+                    .catch(error => console.error('Error reordering:', error));
+                }
+            });
+        }
+    });
+</script>
+@endpush
