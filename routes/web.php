@@ -90,6 +90,11 @@ Route::middleware(['auth', 'active.user'])->group(function () {
         Route::get('/stock-entry', [App\Http\Controllers\Product\StockEntryController::class, 'create'])->name('stock-entry.create');
         Route::post('/stock-entry', [App\Http\Controllers\Product\StockEntryController::class, 'store'])->name('stock-entry.store');
         Route::get('/stock-entry/search', [App\Http\Controllers\Product\StockEntryController::class, 'searchVariants'])->name('stock-entry.search');
+        
+        // Stock Edit (Permission-based)
+        Route::get('/stock-edit', [App\Http\Controllers\Product\StockEditController::class, 'index'])->name('stock-edit.index');
+        Route::post('/stock-edit', [App\Http\Controllers\Product\StockEditController::class, 'update'])->name('stock-edit.update');
+        
         Route::get('/{product}', [App\Http\Controllers\Product\ProductController::class, 'show'])->name('show');
         Route::get('/{product}/edit', [App\Http\Controllers\Product\ProductController::class, 'edit'])->name('edit');
         Route::put('/{product}', [App\Http\Controllers\Product\ProductController::class, 'update'])->name('update');

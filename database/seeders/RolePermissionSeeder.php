@@ -35,6 +35,7 @@ class RolePermissionSeeder extends Seeder
             'delete product',
             'manage product',
             'print product label',
+            'edit product stock',
 
             // Warehouse
             'view warehouse',

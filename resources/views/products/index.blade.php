@@ -83,6 +83,16 @@
                     Export Katalog
                 </a>
 
+                @can('edit product stock')
+                <a href="{{ route('products.stock-edit.index') }}"
+                    class="text-sm px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-colors"
+                    style="background-color: #f59e0b; color: #ffffff;"
+                    onmouseover="this.style.backgroundColor='#d97706'"
+                    onmouseout="this.style.backgroundColor='#f59e0b'">
+                    ✎ Edit Stok
+                </a>
+                @endcan
+
                 @can('create product')
                 <a href="{{ route('products.create') }}"
                     class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm px-4 py-2 rounded-lg font-medium whitespace-nowrap">
