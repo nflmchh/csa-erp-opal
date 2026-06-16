@@ -57,7 +57,7 @@
                     @php $v = $l->variant; @endphp
                     <tr class="hover:bg-gray-50">
                         <td class="px-4 py-2 text-xs text-gray-400 whitespace-nowrap">{{ $l->created_at->format('d/m/Y H:i') }}</td>
-                        <td class="px-4 py-2 font-mono text-xs text-gray-700">{{ optional($v)->sku ?? '—' }}</td>
+                        <td class="px-4 py-2 font-mono text-xs text-gray-700">{{ optional($v)?->sku ?? '—' }}</td>
                         <td class="px-4 py-2 text-xs text-gray-700">{{ optional($v->product)->name ?? '—' }}</td>
                         <td class="px-4 py-2 text-center">
                             @php $typeColors = ['transfer_out' => 'bg-orange-100 text-orange-700', 'out' => 'bg-red-100 text-red-700', 'adjust' => 'bg-purple-100 text-purple-700']; @endphp

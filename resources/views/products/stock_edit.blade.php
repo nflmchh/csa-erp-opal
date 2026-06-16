@@ -121,14 +121,14 @@
                                                 $qty = $stock ? $stock->qty : 0;
                                             @endphp
                                             <tr>
-                                                <td class="px-4 py-3 font-mono text-gray-700">{{ $variant->sku }}</td>
+                                                <td class="px-4 py-3 font-mono text-gray-700">{{ $variant?->sku }}</td>
                                                 <td class="px-4 py-3">
                                                     <span class="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-gray-100 text-xs font-medium text-gray-700">
                                                         <span class="w-3 h-3 rounded-full border border-gray-300" style="background-color: {{ $variant->color->hex_code }}"></span>
-                                                        {{ $variant->color->name }}
+                                                        {{ $variant?->color?->name }}
                                                     </span>
                                                 </td>
-                                                <td class="px-4 py-3 font-medium">{{ $variant->size->name }}</td>
+                                                <td class="px-4 py-3 font-medium">{{ $variant?->size?->name }}</td>
                                                 <td class="px-4 py-3 text-right">
                                                     <input type="number" 
                                                         name="stocks[{{ $variant->id }}]" 

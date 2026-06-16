@@ -72,7 +72,7 @@
                         $p = optional($v)->product;
                     @endphp
                     <tr class="hover:bg-gray-50">
-                        <td class="px-4 py-2 font-mono text-xs text-gray-700">{{ optional($v)->sku ?? '—' }}</td>
+                        <td class="px-4 py-2 font-mono text-xs text-gray-700">{{ optional($v)?->sku ?? '—' }}</td>
                         <td class="px-4 py-2">
                             <a href="{{ route('products.show', $p) }}" class="text-xs text-indigo-600 hover:underline font-medium">{{ optional($p)->name ?? '—' }}</a>
                             <p class="text-xs text-gray-400">{{ optional($p->brand)->code ?? '—' }}</p>
@@ -82,10 +82,10 @@
                                 @if($v->color->hex_code)
                                 <div class="w-3.5 h-3.5 rounded-full border border-gray-300" style="background-color: {{ $v->color->hex_code }}"></div>
                                 @endif
-                                <span class="text-xs text-gray-700">{{ $v->color->name }}</span>
+                                <span class="text-xs text-gray-700">{{ $v?->color?->name }}</span>
                             </div>
                         </td>
-                        <td class="px-4 py-2 text-xs text-gray-700">{{ $v->size->name }}</td>
+                        <td class="px-4 py-2 text-xs text-gray-700">{{ $v?->size?->name }}</td>
                         <td class="px-4 py-2 text-right">
                             <span class="text-sm font-bold {{ $stock->qty <= 3 ? 'text-red-600' : ($stock->qty <= 10 ? 'text-yellow-600' : 'text-gray-900') }}">
                                 {{ $stock->qty }}

@@ -95,7 +95,7 @@
             {{-- Info --}}
             <div class="p-3">
                 @if($product->brand)
-                <p class="text-xs text-indigo-500 font-medium mb-0.5">{{ $product->brand->name }}</p>
+                <p class="text-xs text-indigo-500 font-medium mb-0.5">{{ $product?->brand?->name }}</p>
                 @endif
                 <p class="text-xs font-semibold text-gray-800 leading-snug line-clamp-2">{{ $product->name }}</p>
                 <p class="text-xs text-gray-400 mt-0.5">{{ $product->model_code }}</p>

@@ -94,10 +94,10 @@
             @php $v = $item->variant; @endphp
             <tr>
                 <td class="text-center" style="color:#999">{{ $i+1 }}</td>
-                <td style="font-family:monospace;font-size:11px">{{ $v->sku }}</td>
-                <td>{{ $v->product->name }}</td>
-                <td>{{ $v->color->name }}</td>
-                <td>{{ $v->size->name }}</td>
+                <td style="font-family:monospace;font-size:11px">{{ $v?->sku }}</td>
+                <td>{{ $v?->product?->name }}</td>
+                <td>{{ $v?->color?->name }}</td>
+                <td>{{ $v?->size?->name }}</td>
                 <td class="text-right" style="font-weight:600">{{ $item->qty_sent }}</td>
                 <td class="text-right" style="color:#666">{{ $item->qty_received ?: '____' }}</td>
             </tr>

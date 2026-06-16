@@ -90,9 +90,9 @@
     $uniqueProducts = [];
     foreach ($items as $item) {
         $uniqueProducts[] = [
-            'sku' => $item['variant']->sku,
-            'name' => $item['variant']->product->name,
-            'size' => $item['variant']->size->name,
+            'sku' => $item['variant']?->sku,
+            'name' => $item['variant']?->product?->name,
+            'size' => $item['variant']?->size?->name,
             'color' => optional($item['variant']->color)->name ?? '-',
             'price' => $item['variant']->sellPrice(),
             'copies' => $item['copies']

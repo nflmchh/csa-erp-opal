@@ -67,7 +67,7 @@ body { font-family: DejaVu Sans, sans-serif; font-size: 10px; color: #111; paddi
         @foreach($stocks as $i => $stock)
         <tr>
             <td style="color:#999">{{ $i+1 }}</td>
-            <td style="font-family:monospace;color:#16a34a;font-weight:bold">{{ $stock->variant?->sku ?? '-' }}</td>
+            <td style="font-family:monospace;color:#16a34a;font-weight:bold">{{ $stock->variant??->sku ?? '-' }}</td>
             <td>{{ $stock->variant?->product?->name ?? 'Produk Terhapus' }}</td>
             <td style="color:#555">{{ $stock->variant?->product?->brand?->name ?? '-' }}</td>
             <td>{{ $stock->variant?->color?->name ?? '-' }}</td>

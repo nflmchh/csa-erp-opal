@@ -130,9 +130,9 @@
                         </td>
                         <td class="px-4 py-3 text-xs">
                             @if($expense->store_id)
-                                <span class="text-blue-600 font-medium">Toko: {{ $expense->store->name ?? '-' }}</span>
+                                <span class="text-blue-600 font-medium">Toko: {{ $expense?->store?->name ?? '-' }}</span>
                             @elseif($expense->warehouse_id)
-                                <span class="text-purple-600 font-medium">Gudang: {{ $expense->warehouse->name ?? '-' }}</span>
+                                <span class="text-purple-600 font-medium">Gudang: {{ $expense?->warehouse?->name ?? '-' }}</span>
                             @else
                                 <span class="text-gray-400">—</span>
                             @endif

@@ -77,9 +77,9 @@ body { font-family: DejaVu Sans, sans-serif; font-size: 10px; color: #111; paddi
             </td>
             <td>
                 @if($expense->store_id)
-                <span style="color:#2563eb">Toko: {{ $expense->store->name ?? '-' }}</span>
+                <span style="color:#2563eb">Toko: {{ $expense?->store?->name ?? '-' }}</span>
                 @elseif($expense->warehouse_id)
-                <span style="color:#7c3aed">Gudang: {{ $expense->warehouse->name ?? '-' }}</span>
+                <span style="color:#7c3aed">Gudang: {{ $expense?->warehouse?->name ?? '-' }}</span>
                 @else
                 <span style="color:#ccc">—</span>
                 @endif

@@ -15,11 +15,11 @@
             </div>
             <div>
                 <p class="text-xs text-gray-400">Dari Toko</p>
-                <p class="font-medium text-gray-700">{{ $return->store->name }}</p>
+                <p class="font-medium text-gray-700">{{ $return?->store?->name }}</p>
             </div>
             <div>
                 <p class="text-xs text-gray-400">Ke Gudang</p>
-                <p class="font-medium text-gray-700">{{ $return->warehouse->name }}</p>
+                <p class="font-medium text-gray-700">{{ $return?->warehouse?->name }}</p>
             </div>
             <div>
                 <p class="text-xs text-gray-400">Status</p>
@@ -102,8 +102,8 @@
                             @php $v = $item->variant; @endphp
                             <input type="hidden" name="items[{{ $i }}][id]" value="{{ $item->id }}">
                             <tr>
-                                <td class="px-4 py-2 font-mono text-xs text-gray-700">{{ $v->sku }}</td>
-                                <td class="px-4 py-2 text-xs text-gray-700">{{ $v->product->name }} · {{ $v->color->name }} / {{ $v->size->name }}</td>
+                                <td class="px-4 py-2 font-mono text-xs text-gray-700">{{ $v?->sku }}</td>
+                                <td class="px-4 py-2 text-xs text-gray-700">{{ $v?->product?->name }} · {{ $v?->color?->name }} / {{ $v?->size?->name }}</td>
                                 <td class="px-4 py-2 text-right text-xs font-semibold text-gray-700">{{ $item->qty_returned }}</td>
                                 <td class="px-4 py-2 text-right">
                                     <input type="number" name="items[{{ $i }}][qty_good]"
@@ -162,8 +162,8 @@
                     @foreach($return->items as $item)
                     @php $v = $item->variant; @endphp
                     <tr>
-                        <td class="px-4 py-2 font-mono text-xs text-gray-700">{{ $v->sku }}</td>
-                        <td class="px-4 py-2 text-xs text-gray-700">{{ $v->product->name }} · {{ $v->color->name }} / {{ $v->size->name }}</td>
+                        <td class="px-4 py-2 font-mono text-xs text-gray-700">{{ $v?->sku }}</td>
+                        <td class="px-4 py-2 text-xs text-gray-700">{{ $v?->product?->name }} · {{ $v?->color?->name }} / {{ $v?->size?->name }}</td>
                         <td class="px-4 py-2 text-right text-xs font-semibold text-gray-700">{{ $item->qty_returned }}</td>
                         <td class="px-4 py-2 text-right text-xs font-semibold text-green-700">{{ $item->qty_good }}</td>
                         <td class="px-4 py-2 text-right text-xs font-semibold {{ $item->qty_damaged > 0 ? 'text-red-600' : 'text-gray-400' }}">
@@ -197,8 +197,8 @@
                     @foreach($return->items as $item)
                     @php $v = $item->variant; @endphp
                     <tr>
-                        <td class="px-4 py-2 font-mono text-xs text-gray-700">{{ $v->sku }}</td>
-                        <td class="px-4 py-2 text-xs text-gray-700">{{ $v->product->name }} · {{ $v->color->name }} / {{ $v->size->name }}</td>
+                        <td class="px-4 py-2 font-mono text-xs text-gray-700">{{ $v?->sku }}</td>
+                        <td class="px-4 py-2 text-xs text-gray-700">{{ $v?->product?->name }} · {{ $v?->color?->name }} / {{ $v?->size?->name }}</td>
                         <td class="px-4 py-2 text-right text-xs font-semibold text-gray-700">{{ $item->qty_returned }}</td>
                     </tr>
                     @endforeach

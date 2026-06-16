@@ -34,7 +34,7 @@
 <body>
 
 <div class="center bold" style="font-size:22px; margin-bottom: 6px;">SevenKey ERP</div>
-<div class="center bold" style="font-size:14px; margin-bottom: 2px;">{{ $sale->store->name }}</div>
+<div class="center bold" style="font-size:14px; margin-bottom: 2px;">{{ $sale?->store?->name }}</div>
 @if($sale->store->address)
 <div class="center" style="font-size:11px;color:#444">{{ $sale->store->address }}</div>
 @endif
@@ -63,8 +63,8 @@
     $itemTypeLabel = $item->is_ecer ? '(Ecer)' : '(Grosir)';
 @endphp
 <div style="margin-bottom:8px">
-    <div class="bold" style="font-size:13px">{{ $v->product->name }} <span style="font-size: 11px; color: #444;">{{ $itemTypeLabel }}</span></div>
-    <div style="font-size:11px;color:#444;margin-bottom:2px;">{{ $v->sku }} · {{ $v->color->name }} / {{ $v->size->name }}</div>
+    <div class="bold" style="font-size:13px">{{ $v?->product?->name }} <span style="font-size: 11px; color: #444;">{{ $itemTypeLabel }}</span></div>
+    <div style="font-size:11px;color:#444;margin-bottom:2px;">{{ $v?->sku }} · {{ $v?->color?->name }} / {{ $v?->size?->name }}</div>
     <div class="row">
         <span class="item-name" style="font-size:12px">@ {{ number_format($item->unit_price, 0, ',', '.') }}</span>
         <span class="item-qty">x{{ $item->qty }}</span>
@@ -139,7 +139,7 @@
 <script>
     function printKeAplikasiPos() {
         const dataStruk = {
-            store_name: "{{ $sale->store->name }}",
+            store_name: "{{ $sale?->store?->name }}",
             store_address: "{{ $sale->store->address ?? '' }}",
             receipt_no: "{{ $sale->sale_no }}",
             date: "{{ $sale->created_at->format('d/m/Y H:i') }}",
@@ -148,7 +148,7 @@
             items: [
                 @foreach($sale->items as $item)
                 {
-                    name: "{{ $item->variant->product->name }}",
+                    name: "{{ $item->variant?->product?->name }}",
                     qty: "{{ $item->qty }}",
                     price: "{{ number_format($item->unit_price, 0, ',', '.') }}",
                     total: "{{ number_format($item->subtotal, 0, ',', '.') }}"

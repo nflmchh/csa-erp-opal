@@ -56,8 +56,8 @@
                     @forelse($shipments as $s)
                     <tr class="hover:bg-gray-50">
                         <td class="px-4 py-3 font-mono text-xs font-semibold text-indigo-600">{{ $s->shipment_no }}</td>
-                        <td class="px-4 py-3 text-xs text-gray-700">{{ $s->warehouse->name }}</td>
-                        <td class="px-4 py-3 text-xs text-gray-700">{{ $s->store->name }}</td>
+                        <td class="px-4 py-3 text-xs text-gray-700">{{ $s?->warehouse?->name }}</td>
+                        <td class="px-4 py-3 text-xs text-gray-700">{{ $s?->store?->name }}</td>
                         <td class="px-4 py-3 text-center">
                             <span class="text-xs px-2 py-0.5 rounded-full {{ $s->statusColor() }}">{{ $s->statusLabel() }}</span>
                         </td>

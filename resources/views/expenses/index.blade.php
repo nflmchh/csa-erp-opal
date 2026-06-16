@@ -56,11 +56,11 @@
                     <td class="px-4 py-3">
                         @if($expense->store_id)
                             <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
-                                Toko: {{ $expense->store->name ?? 'Toko Dihapus' }}
+                                Toko: {{ $expense?->store?->name ?? 'Toko Dihapus' }}
                             </span>
                         @elseif($expense->warehouse_id)
                             <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-purple-50 text-purple-700 border border-purple-200">
-                                Gudang: {{ $expense->warehouse->name ?? 'Gudang Dihapus' }}
+                                Gudang: {{ $expense?->warehouse?->name ?? 'Gudang Dihapus' }}
                             </span>
                         @else
                             <span class="text-gray-400 italic text-xs">-</span>

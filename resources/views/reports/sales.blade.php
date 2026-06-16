@@ -104,7 +104,7 @@
                         @forelse($sales as $sale)
                             <tr class="hover:bg-gray-50">
                                 <td class="px-4 py-3 font-mono text-xs font-semibold text-indigo-600">{{ $sale->sale_no }}</td>
-                                <td class="px-4 py-3 text-xs text-gray-700">{{ $sale->store->name }}</td>
+                                <td class="px-4 py-3 text-xs text-gray-700">{{ $sale?->store?->name }}</td>
                                 <td class="px-4 py-3 text-xs text-gray-500">{{ $sale->paymentMethod?->name ?? '—' }}</td>
                                 <td class="px-4 py-3 text-right text-xs text-gray-700">{{ $sale->items->sum('qty') }}</td>
                                 <td class="px-4 py-3 text-right text-xs font-semibold text-gray-800">Rp

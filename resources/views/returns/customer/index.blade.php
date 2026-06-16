@@ -58,7 +58,7 @@
                     @forelse($returns as $r)
                     <tr class="hover:bg-gray-50">
                         <td class="px-4 py-3 font-mono text-xs font-semibold text-indigo-600">{{ $r->return_no }}</td>
-                        <td class="px-4 py-3 text-xs text-gray-700">{{ $r->store->name }}</td>
+                        <td class="px-4 py-3 text-xs text-gray-700">{{ $r?->store?->name }}</td>
                         <td class="px-4 py-3 text-xs text-gray-500">{{ $r->reason?->name ?? '—' }}</td>
                         <td class="px-4 py-3 text-center">
                             @if($r->status === 'processed')

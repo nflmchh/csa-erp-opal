@@ -42,7 +42,7 @@
     </div>
     @endif
     <div class="receipt-wrapper">
-    <div class="center bold" style="font-size:16px; margin-bottom: 2px; text-transform: uppercase;">{{ $sale->store->name }}</div>
+    <div class="center bold" style="font-size:16px; margin-bottom: 2px; text-transform: uppercase;">{{ $sale?->store?->name }}</div>
     <div class="center" style="font-size:9px; color:#666; margin-bottom: 4px;">SevenKey erp</div>
     @if($sale->store->address)
     <div class="center" style="font-size:11px;color:#444">{{ $sale->store->address }}</div>
@@ -86,8 +86,8 @@
         $itemTypeLabel = $item->is_ecer ? '(Ecer)' : '(Grosir)';
     @endphp
     <div style="margin-bottom:8px">
-        <div class="bold" style="font-size:13px">{{ $v->product->name }} <span style="font-size: 11px; color: #444;">{{ $itemTypeLabel }}</span></div>
-        <div style="font-size:11px;color:#444;margin-bottom:2px;">{{ $v->sku }} · {{ $v->color->name }} / {{ $v->size->name }}</div>
+        <div class="bold" style="font-size:13px">{{ $v?->product?->name }} <span style="font-size: 11px; color: #444;">{{ $itemTypeLabel }}</span></div>
+        <div style="font-size:11px;color:#444;margin-bottom:2px;">{{ $v?->sku }} · {{ $v?->color?->name }} / {{ $v?->size?->name }}</div>
         <div class="row">
             <span class="item-name" style="font-size:12px">@ Rp {{ number_format($item->unit_price, 0, ',', '.') }}</span>
             <span class="item-qty">x{{ $item->qty }}</span>

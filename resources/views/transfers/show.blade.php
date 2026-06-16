@@ -128,8 +128,8 @@
                         @php $v = $item->variant; @endphp
                         <input type="hidden" name="items[{{ $i }}][id]" value="{{ $item->id }}">
                         <tr>
-                            <td class="px-4 py-2 font-mono text-xs text-gray-700">{{ $v->sku }}</td>
-                            <td class="px-4 py-2 text-xs text-gray-700">{{ $v->product->name }} · {{ $v->color->name }} / {{ $v->size->name }}</td>
+                            <td class="px-4 py-2 font-mono text-xs text-gray-700">{{ $v?->sku }}</td>
+                            <td class="px-4 py-2 text-xs text-gray-700">{{ $v?->product?->name }} · {{ $v?->color?->name }} / {{ $v?->size?->name }}</td>
                             <td class="px-4 py-2 text-right text-xs font-semibold text-gray-700">{{ $item->qty_requested }}</td>
                             <td class="px-4 py-2 text-right">
                                 <input type="number" name="items[{{ $i }}][qty_sent]"
@@ -176,8 +176,8 @@
                         @php $v = $item->variant; @endphp
                         <input type="hidden" name="items[{{ $i }}][id]" value="{{ $item->id }}">
                         <tr>
-                            <td class="px-4 py-2 font-mono text-xs text-gray-700">{{ $v->sku }}</td>
-                            <td class="px-4 py-2 text-xs text-gray-700">{{ $v->product->name }} · {{ $v->color->name }} / {{ $v->size->name }}</td>
+                            <td class="px-4 py-2 font-mono text-xs text-gray-700">{{ $v?->sku }}</td>
+                            <td class="px-4 py-2 text-xs text-gray-700">{{ $v?->product?->name }} · {{ $v?->color?->name }} / {{ $v?->size?->name }}</td>
                             <td class="px-4 py-2 text-right text-xs font-semibold text-gray-700">{{ $item->qty_sent }}</td>
                             <td class="px-4 py-2 text-right">
                                 <input type="number" name="items[{{ $i }}][qty_received]"
@@ -221,8 +221,8 @@
                     @foreach($transfer->items as $item)
                     @php $v = $item->variant; @endphp
                     <tr>
-                        <td class="px-4 py-2 font-mono text-xs text-gray-700">{{ $v->sku }}</td>
-                        <td class="px-4 py-2 text-xs text-gray-700">{{ $v->product->name }} · {{ $v->color->name }} / {{ $v->size->name }}</td>
+                        <td class="px-4 py-2 font-mono text-xs text-gray-700">{{ $v?->sku }}</td>
+                        <td class="px-4 py-2 text-xs text-gray-700">{{ $v?->product?->name }} · {{ $v?->color?->name }} / {{ $v?->size?->name }}</td>
                         <td class="px-4 py-2 text-right text-xs text-gray-700">{{ $item->qty_requested }}</td>
                         <td class="px-4 py-2 text-right text-xs text-gray-700">{{ $item->qty_sent ?: '—' }}</td>
                         <td class="px-4 py-2 text-right text-xs font-semibold

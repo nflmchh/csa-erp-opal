@@ -69,8 +69,8 @@
                     @forelse($returns as $r)
                     <tr class="hover:bg-gray-50">
                         <td class="px-4 py-3 font-mono text-xs font-semibold text-indigo-600">{{ $r->return_no }}</td>
-                        <td class="px-4 py-3 text-xs text-gray-700">{{ $r->store->name }}</td>
-                        <td class="px-4 py-3 text-xs text-gray-700">{{ $r->warehouse->name }}</td>
+                        <td class="px-4 py-3 text-xs text-gray-700">{{ $r?->store?->name }}</td>
+                        <td class="px-4 py-3 text-xs text-gray-700">{{ $r?->warehouse?->name }}</td>
                         <td class="px-4 py-3 text-center">
                             <span class="text-xs px-2 py-0.5 rounded-full {{ $r->statusColor() }}">{{ $r->statusLabel() }}</span>
                         </td>

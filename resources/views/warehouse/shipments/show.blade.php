@@ -125,7 +125,7 @@
                     @foreach($shipment->items as $item)
                     @php $v = $item->variant; @endphp
                     <tr class="hover:bg-gray-50">
-                       <td class="px-4 py-2 font-mono text-xs text-gray-700">{{ optional($v)->sku ?? '—' }}</td>
+                       <td class="px-4 py-2 font-mono text-xs text-gray-700">{{ optional($v)?->sku ?? '—' }}</td>
                         <td class="px-4 py-2 text-xs text-gray-700">{{ optional($v->product)->name ?? '—' }}</td>
                         <td class="px-4 py-2 text-xs text-gray-500">{{ optional($v->color)->name ?? '—' }} / {{ optional($v->size)->name ?? '—' }}</td>
                         <td class="px-4 py-2 text-right text-xs font-semibold text-gray-700">{{ $item->qty_sent }}</td>

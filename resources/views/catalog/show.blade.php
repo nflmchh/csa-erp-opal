@@ -1,7 +1,7 @@
 @extends('layouts.app')
-@section('title', $productVariant->product->name)
-@section('page-title', $productVariant->product->name)
-@section('breadcrumb', 'Katalog / ' . $productVariant->product->name)
+@section('title', $productVariant?->product?->name)
+@section('page-title', $productVariant?->product?->name)
+@section('breadcrumb', 'Katalog / ' . $productVariant?->product?->name)
 
 @section('content')
 @php $product = $productVariant->product; @endphp
@@ -38,7 +38,7 @@
             {{-- Product info --}}
             <div class="p-5 space-y-4">
                 @if($product->brand)
-                <p class="text-xs font-semibold text-indigo-500 uppercase tracking-wide">{{ $product->brand->name }}</p>
+                <p class="text-xs font-semibold text-indigo-500 uppercase tracking-wide">{{ $product?->brand?->name }}</p>
                 @endif
                 <h1 class="text-xl font-bold text-gray-900">{{ $product->name }}</h1>
                 <p class="text-xs text-gray-400 font-mono">{{ $product->model_code }}</p>
@@ -56,15 +56,15 @@
                 <div class="grid grid-cols-2 gap-3 text-sm">
                     <div>
                         <p class="text-xs text-gray-400">Warna</p>
-                        <p class="font-medium text-gray-700">{{ $productVariant->color->name }}</p>
+                        <p class="font-medium text-gray-700">{{ $productVariant?->color?->name }}</p>
                     </div>
                     <div>
                         <p class="text-xs text-gray-400">Ukuran</p>
-                        <p class="font-medium text-gray-700">{{ $productVariant->size->name }}</p>
+                        <p class="font-medium text-gray-700">{{ $productVariant?->size?->name }}</p>
                     </div>
                     <div>
                         <p class="text-xs text-gray-400">SKU</p>
-                        <p class="font-mono text-xs font-semibold text-indigo-600">{{ $productVariant->sku }}</p>
+                        <p class="font-mono text-xs font-semibold text-indigo-600">{{ $productVariant?->sku }}</p>
                     </div>
                     <div>
                         <p class="text-xs text-gray-400">Kategori</p>
@@ -124,10 +124,10 @@
                     @endphp
                     <tr class="{{ $v->id === $productVariant->id ? 'bg-indigo-50' : 'hover:bg-gray-50' }}">
                         <td class="px-4 py-2 font-mono text-xs {{ $v->id === $productVariant->id ? 'text-indigo-700 font-bold' : 'text-gray-700' }}">
-                            {{ $v->sku }}
+                            {{ $v?->sku }}
                         </td>
-                        <td class="px-4 py-2 text-xs text-gray-700">{{ $v->color->name }}</td>
-                        <td class="px-4 py-2 text-xs text-gray-700">{{ $v->size->name }}</td>
+                        <td class="px-4 py-2 text-xs text-gray-700">{{ $v?->color?->name }}</td>
+                        <td class="px-4 py-2 text-xs text-gray-700">{{ $v?->size?->name }}</td>
                         <td class="px-4 py-2 text-right text-xs text-gray-700">Rp {{ number_format($v->sellPrice(), 0, ',', '.') }}</td>
                         <td class="px-4 py-2 text-right text-xs {{ $vs > 0 ? 'text-green-600 font-semibold' : 'text-gray-400' }}">{{ $vs }}</td>
                         <td class="px-4 py-2 text-right text-xs {{ $vw > 0 ? 'text-blue-600 font-semibold' : 'text-gray-400' }}">{{ $vw }}</td>

@@ -215,7 +215,7 @@
                             {{ $sale->created_at->format('d/m/Y H:i') }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-gray-600">
-                            {{ $sale->store ? $sale->store->name : '-' }}
+                            {{ $sale->store ? $sale?->store?->name : '-' }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             @if($sale->payment_status === 'lunas')

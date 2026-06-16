@@ -105,9 +105,9 @@
                             @endphp
                             <input type="hidden" name="items[{{ $i }}][id]" value="{{ $item->id }}">
                             <tr class="item-row" data-sell-price="{{ $sellPrice }}" data-retail-price="{{ $retailPrice }}" data-sys-qty="{{ $item->qty_system }}">
-                                <td class="px-4 py-2 font-mono text-xs text-gray-700">{{ $v->sku }}</td>
+                                <td class="px-4 py-2 font-mono text-xs text-gray-700">{{ $v?->sku }}</td>
                                 <td class="px-4 py-2 text-xs text-gray-700">
-                                    {{ $v->product->name }} · {{ $v->color->name }} / {{ $v->size->name }}
+                                    {{ $v?->product?->name }} · {{ $v?->color?->name }} / {{ $v?->size?->name }}
                                 </td>
                                 @if($opname->location_type === 'store')
                                 <td class="px-4 py-2 text-xs">
@@ -241,9 +241,9 @@
                         })->exists() : false;
                     @endphp
                     <tr class="{{ $diff !== null && $diff != 0 ? 'bg-yellow-50' : '' }}">
-                        <td class="px-4 py-2 font-mono text-xs text-gray-700">{{ $v->sku }}</td>
+                        <td class="px-4 py-2 font-mono text-xs text-gray-700">{{ $v?->sku }}</td>
                         <td class="px-4 py-2 text-xs text-gray-700">
-                            {{ $v->product->name }} · {{ $v->color->name }} / {{ $v->size->name }}
+                            {{ $v?->product?->name }} · {{ $v?->color?->name }} / {{ $v?->size?->name }}
                         </td>
                         @if($opname->location_type === 'store')
                         <td class="px-4 py-2 text-xs font-semibold text-gray-500">

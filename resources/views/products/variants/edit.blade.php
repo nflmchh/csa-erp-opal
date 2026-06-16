@@ -1,6 +1,6 @@
 @extends('layouts.app')
 @section('title', 'Edit Varian')
-@section('page-title', 'Edit Varian — ' . $variant->sku)
+@section('page-title', 'Edit Varian — ' . $variant?->sku)
 @section('breadcrumb', 'Produk / ' . $variant->product->model_code . ' / Varian / Edit')
 
 @section('content')
@@ -15,11 +15,11 @@
         <div class="grid grid-cols-2 gap-4 text-sm pb-4 border-b border-gray-50">
             <div>
                 <p class="text-xs text-gray-400 uppercase tracking-wide mb-1">SKU</p>
-                <p class="font-mono font-semibold text-gray-700">{{ $variant->sku }}</p>
+                <p class="font-mono font-semibold text-gray-700">{{ $variant?->sku }}</p>
             </div>
             <div>
                 <p class="text-xs text-gray-400 uppercase tracking-wide mb-1">Produk</p>
-                <p class="text-gray-700">{{ $variant->product->name }}</p>
+                <p class="text-gray-700">{{ $variant?->product?->name }}</p>
             </div>
             <div>
                 <p class="text-xs text-gray-400 uppercase tracking-wide mb-1">Warna</p>
@@ -27,12 +27,12 @@
                     @if($variant->color->hex_code)
                         <div class="w-4 h-4 rounded-full border border-gray-300" style="background-color: {{ $variant->color->hex_code }}"></div>
                     @endif
-                    <span>{{ $variant->color->name }}</span>
+                    <span>{{ $variant?->color?->name }}</span>
                 </div>
             </div>
             <div>
                 <p class="text-xs text-gray-400 uppercase tracking-wide mb-1">Ukuran</p>
-                <p class="text-gray-700">{{ $variant->size->name }}</p>
+                <p class="text-gray-700">{{ $variant?->size?->name }}</p>
             </div>
         </div>
 
@@ -57,7 +57,7 @@
                 @endforeach
             </div>
             <p class="text-[10px] text-gray-400 mt-2">* Gambar diambil dari foto produk yang sudah diunggah. <br> 
-            <span class="text-indigo-500 font-medium">INFO: Mengubah gambar ini akan otomatis memperbarui gambar semua varian warna {{ $variant->color->name }} di produk ini.</span></p>
+            <span class="text-indigo-500 font-medium">INFO: Mengubah gambar ini akan otomatis memperbarui gambar semua varian warna {{ $variant?->color?->name }} di produk ini.</span></p>
         </div>
 
         <div class="flex items-center gap-2 pt-2">
@@ -72,7 +72,7 @@
         <a href="{{ route('products.show', $variant->product_id) }}" class="text-sm text-gray-600 hover:underline">← Batal</a>
         <div class="flex gap-3">
             @can('update product')
-            <button type="button" @click="if(confirm('Hapus varian {{ $variant->sku }}?')) document.getElementById('delete-form').submit()" 
+            <button type="button" @click="if(confirm('Hapus varian {{ $variant?->sku }}?')) document.getElementById('delete-form').submit()" 
                 class="bg-red-50 hover:bg-red-100 text-red-600 text-sm px-4 py-2 rounded-lg">
                 Hapus
             </button>

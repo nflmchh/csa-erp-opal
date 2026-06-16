@@ -62,8 +62,8 @@
             @php $v = $item->variant; @endphp
             <tr>
                 <td>{{ $i + 1 }}</td>
-                <td style="font-family:monospace">{{ $v->sku }}</td>
-                <td>{{ $v->product->name }} · {{ $v->color->name }} / {{ $v->size->name }}</td>
+                <td style="font-family:monospace">{{ $v?->sku }}</td>
+                <td>{{ $v?->product?->name }} · {{ $v?->color?->name }} / {{ $v?->size?->name }}</td>
                 <td class="text-right">{{ $item->qty_requested }}</td>
                 <td class="text-right">{{ $item->qty_sent ?: '—' }}</td>
                 <td class="text-right">{{ $item->qty_received ?: '—' }}</td>

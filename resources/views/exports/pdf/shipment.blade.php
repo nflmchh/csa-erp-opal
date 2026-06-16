@@ -74,8 +74,8 @@ body { font-family: DejaVu Sans, sans-serif; font-size: 10px; color: #111; paddi
         <tr style="background: {{ $i % 2 === 0 ? '#fff' : '#fafafa' }}">
             <td style="color:#999">{{ $i+1 }}</td>
             <td style="font-family:monospace;font-weight:bold;color:#f97316">{{ $shipment->shipment_no }}</td>
-            <td>{{ $shipment->warehouse->name }}</td>
-            <td>{{ $shipment->store->name }}</td>
+            <td>{{ $shipment?->warehouse?->name }}</td>
+            <td>{{ $shipment?->store?->name }}</td>
             <td class="text-center"><span class="{{ $badgeClass }}">{{ $statusLabel }}</span></td>
             <td class="text-right">{{ number_format($shipment->items->count()) }}</td>
             <td class="text-right" style="font-weight:bold;color:#f97316">{{ number_format($shipment->totalQtySent()) }}</td>

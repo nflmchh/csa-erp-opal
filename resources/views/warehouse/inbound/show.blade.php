@@ -74,7 +74,7 @@
                         $p = optional($v)->product;
                     @endphp
                     <tr class="hover:bg-gray-50">
-                        <td class="px-4 py-2 font-mono text-xs text-gray-700">{{ optional($v)->sku ?? '—' }}</td>
+                        <td class="px-4 py-2 font-mono text-xs text-gray-700">{{ optional($v)?->sku ?? '—' }}</td>
                         <td class="px-4 py-2 text-xs text-gray-700">{{ optional($p)->name ?? '—' }}</td>
                         <td class="px-4 py-2 text-xs text-gray-500">{{ optional($v->color)->name ?? '—' }} / {{ optional($v->size)->name ?? '—' }}</td>
                         <td class="px-4 py-2 text-right text-xs font-semibold text-gray-700">{{ $item->qty }}</td>

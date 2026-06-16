@@ -66,7 +66,7 @@
                 <tbody class="divide-y divide-gray-100">
                     @forelse($stocks as $s)
                     <tr class="hover:bg-gray-50">
-                        <td class="px-4 py-3 font-mono text-xs text-gray-700">{{ $s->sku }}</td>
+                        <td class="px-4 py-3 font-mono text-xs text-gray-700">{{ $s?->sku }}</td>
                         <td class="px-4 py-3 text-xs font-medium text-gray-800">{{ $s->product_name }}</td>
                         <td class="px-4 py-3 text-xs text-gray-500">{{ $s->color_name }} / {{ $s->size_name }}</td>
                         <td class="px-4 py-3 text-right text-xs text-gray-700">{{ number_format($s->qty) }}</td>

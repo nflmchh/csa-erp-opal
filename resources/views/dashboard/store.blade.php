@@ -42,7 +42,7 @@
                         <p class="text-xs text-gray-500 mt-0.5">
                             No. Transaksi: <span class="font-mono text-indigo-600 font-semibold">{{ $sale->sale_no }}</span> 
                             @if($sale->store)
-                                · Toko: <span class="font-medium text-gray-700">{{ $sale->store->name }}</span>
+                                · Toko: <span class="font-medium text-gray-700">{{ $sale?->store?->name }}</span>
                             @endif
                         </p>
                         <p class="text-xs font-semibold mt-1">
@@ -209,8 +209,8 @@
                             @foreach($latestOpname->items as $item)
                                 @php $v = $item->variant; $diff = $item->qty_difference; @endphp
                                 <tr class="hover:bg-gray-50 {{ $diff !== null && $diff != 0 ? 'bg-yellow-50/30' : '' }}">
-                                    <td class="px-6 py-3 font-mono text-xs">{{ $v->sku }}</td>
-                                    <td class="px-6 py-3 text-xs">{{ $v->product->name }} · {{ $v->color->name }}/{{ $v->size->name }}</td>
+                                    <td class="px-6 py-3 font-mono text-xs">{{ $v?->sku }}</td>
+                                    <td class="px-6 py-3 text-xs">{{ $v?->product?->name }} · {{ $v?->color?->name }}/{{ $v?->size?->name }}</td>
                                     <td class="px-6 py-3 text-right font-semibold text-gray-700">{{ $item->qty_system }}</td>
                                     <td class="px-6 py-3 text-right text-gray-700">{{ $item->qty_actual ?? '-' }}</td>
                                     <td class="px-6 py-3 text-right font-bold {{ $diff === null ? 'text-gray-400' : ($diff > 0 ? 'text-green-600' : ($diff < 0 ? 'text-red-600' : 'text-gray-500')) }}">
@@ -273,7 +273,7 @@
                 </div>
             </td>
             <td class="px-6 py-3 text-xs text-gray-500">
-                {{ $p->brand->name ?? '—' }}
+                {{ $p?->brand?->name ?? '—' }}
             </td>
             {{-- Kolom Stok --}}
             <td class="px-6 py-3 text-right">

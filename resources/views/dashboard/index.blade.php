@@ -91,7 +91,7 @@
                             <p class="text-xs text-gray-500 mt-0.5">
                                 No. Transaksi: <span class="font-mono text-indigo-600 font-semibold">{{ $sale->sale_no }}</span> 
                                 @if($sale->store)
-                                    · Toko: <span class="font-medium text-gray-700">{{ $sale->store->name }}</span>
+                                    · Toko: <span class="font-medium text-gray-700">{{ $sale?->store?->name }}</span>
                                 @endif
                             </p>
                             <p class="text-xs font-semibold mt-1">
@@ -386,10 +386,10 @@
                                 @foreach($latestOpname->items as $item)
                                     @php $v = $item->variant; $diff = $item->qty_difference; @endphp
                                     <tr class="hover:bg-gray-50 {{ $diff !== null && $diff != 0 ? 'bg-yellow-50/30' : '' }}">
-                                        <td class="px-6 py-3 font-mono text-xs">{{ $v ? $v->sku : '-' }}</td>
+                                        <td class="px-6 py-3 font-mono text-xs">{{ $v ? $v?->sku : '-' }}</td>
                                         <td class="px-6 py-3 text-xs">
                                             @if($v)
-                                                {{ $v->product->name ?? '-' }} · {{ $v->color->name ?? '-' }}/{{ $v->size->name ?? '-' }}
+                                                {{ $v?->product?->name ?? '-' }} · {{ $v?->color?->name ?? '-' }}/{{ $v?->size?->name ?? '-' }}
                                             @else
                                                 <span class="text-red-500 italic">Varian tidak ditemukan</span>
                                             @endif

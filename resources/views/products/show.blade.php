@@ -137,17 +137,17 @@
                                 @endif
                             </div>
                         </td>
-                        <td class="px-4 py-3 font-mono text-xs text-gray-700">{{ $variant->sku }}</td>
+                        <td class="px-4 py-3 font-mono text-xs text-gray-700">{{ $variant?->sku }}</td>
                         <td class="px-4 py-3">
                             <div class="flex items-center gap-2">
                                 @if($variant->color->hex_code)
                                 <div class="w-4 h-4 rounded-full border border-gray-300"
                                     style="background-color: {{ $variant->color->hex_code }}"></div>
                                 @endif
-                                <span class="text-xs text-gray-700">{{ $variant->color->name }}</span>
+                                <span class="text-xs text-gray-700">{{ $variant?->color?->name }}</span>
                             </div>
                         </td>
-                        <td class="px-4 py-3 text-xs text-gray-700">{{ $variant->size->name }}</td>
+                        <td class="px-4 py-3 text-xs text-gray-700">{{ $variant?->size?->name }}</td>
                         <td class="px-4 py-3 text-right text-xs font-medium text-gray-700">
                             Rp {{ number_format($variant->sellPrice(), 0, ',', '.') }}
                             @if($variant->price_adjustment != 0)

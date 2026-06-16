@@ -73,7 +73,7 @@ body { font-family: DejaVu Sans, sans-serif; font-size: 10px; color: #111; paddi
         @endphp
         <tr>
             <td style="font-family:monospace;color:#4f46e5;font-weight:bold">{{ $inbound->reference_no }}</td>
-            <td>{{ $inbound->warehouse->name }}</td>
+            <td>{{ $inbound?->warehouse?->name }}</td>
             <td>{{ $inbound->supplier_name ?? '-' }}</td>
             <td class="text-center">
                 <span class="badge" style="{{ $statusColor[$inbound->status] ?? '' }}">

@@ -74,7 +74,7 @@
                     <div class="p-3 flex-1 flex flex-col">
                         <div class="flex justify-between items-start mb-1">
                             <span class="text-[9px] font-black bg-indigo-900 text-white px-2 py-0.5 rounded-full uppercase">
-                                {{ $product->brand->name }}
+                                {{ $product?->brand?->name }}
                             </span>
                             <span class="text-xs font-bold text-indigo-600">
                                 Rp {{ number_format($product->sell_price, 0, ',', '.') }}
@@ -93,12 +93,12 @@
                                 @foreach($product->variants as $variant)
                                     <div class="flex items-center gap-2 bg-white p-1 rounded border border-gray-50">
                                         <div class="shrink-0 text-center border-r border-gray-100 pr-1.5 min-w-[35px]">
-                                            <p class="text-[8px] font-black text-gray-800 leading-none">{{ $variant->size->name }}</p>
-                                            <p class="text-[7px] text-gray-400 uppercase mt-0.5 truncate max-w-[30px]">{{ $variant->color->name }}</p>
+                                            <p class="text-[8px] font-black text-gray-800 leading-none">{{ $variant?->size?->name }}</p>
+                                            <p class="text-[7px] text-gray-400 uppercase mt-0.5 truncate max-w-[30px]">{{ $variant?->color?->name }}</p>
                                         </div>
                                         <div class="flex-1 overflow-hidden flex flex-col items-center">
-                                            <svg class="barcode-svg" data-sku="{{ $variant->sku }}"></svg>
-                                            <p class="text-[7px] font-mono font-semibold text-gray-500 leading-none mt-0.5">{{ $variant->sku }}</p>
+                                            <svg class="barcode-svg" data-sku="{{ $variant?->sku }}"></svg>
+                                            <p class="text-[7px] font-mono font-semibold text-gray-500 leading-none mt-0.5">{{ $variant?->sku }}</p>
                                         </div>
                                     </div>
                                 @endforeach

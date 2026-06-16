@@ -15,7 +15,7 @@
             </div>
             <div>
                 <p class="text-xs text-gray-400">Toko</p>
-                <p class="font-medium text-gray-700">{{ $return->store->name }}</p>
+                <p class="font-medium text-gray-700">{{ $return?->store?->name }}</p>
             </div>
             <div>
                 <p class="text-xs text-gray-400">Status</p>
@@ -73,8 +73,8 @@
                     @foreach($return->items as $item)
                     @php $v = $item->variant; @endphp
                     <tr>
-                        <td class="px-4 py-2 font-mono text-xs text-gray-700">{{ $v->sku }}</td>
-                        <td class="px-4 py-2 text-xs text-gray-700">{{ $v->product->name }} · {{ $v->color->name }} / {{ $v->size->name }}</td>
+                        <td class="px-4 py-2 font-mono text-xs text-gray-700">{{ $v?->sku }}</td>
+                        <td class="px-4 py-2 text-xs text-gray-700">{{ $v?->product?->name }} · {{ $v?->color?->name }} / {{ $v?->size?->name }}</td>
                         <td class="px-4 py-2 text-right text-xs text-gray-700">Rp {{ number_format($item->unit_price, 0, ',', '.') }}</td>
                         <td class="px-4 py-2 text-right text-xs font-semibold text-gray-700">{{ $item->qty }}</td>
                         <td class="px-4 py-2 text-center">

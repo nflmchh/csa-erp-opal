@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<title>Label — {{ $variant->sku }}</title>
+<title>Label — {{ $variant?->sku }}</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { font-family: Arial, sans-serif; background: #f3f4f6; }
@@ -85,7 +85,7 @@ body { font-family: Arial, sans-serif; background: #f3f4f6; }
 {{-- Print controls --}}
 <div class="no-print" style="position:fixed;top:0;left:0;right:0;background:#1e1b4b;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;z-index:100;">
     <div style="color:white;font-family:sans-serif;font-size:14px;font-weight:bold;">
-        Label 17x58mm — {{ $variant->sku }}
+        Label 17x58mm — {{ $variant?->sku }}
     </div>
     <div style="display:flex;gap:8px;align-items:center;">
         <label style="color:#c7d2fe;font-family:sans-serif;font-size:12px;">Jumlah:</label>
@@ -111,7 +111,7 @@ body { font-family: Arial, sans-serif; background: #f3f4f6; }
     @for($i = 0; $i < $copies; $i++)
     <div class="label" style="box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 0.5mm;">
         <div class="header" style="width: 100%; margin-bottom: 0.5mm; margin-top: 0;">
-            <div class="name" style="text-align: center; font-size: 7pt; font-weight: bold; line-height: 1.1; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ $variant->product->name }} ({{ $variant->size->name }})</div>
+            <div class="name" style="text-align: center; font-size: 7pt; font-weight: bold; line-height: 1.1; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ $variant?->product?->name }} ({{ $variant?->size?->name }})</div>
         </div>
         <div class="barcode-container" style="width: 100%; flex: none; display: flex; justify-content: center; overflow: hidden;">
             <svg class="barcode"></svg>
@@ -123,7 +123,7 @@ body { font-family: Arial, sans-serif; background: #f3f4f6; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js"></script>
 <script>
 document.querySelectorAll('.barcode').forEach(function(el) {
-    JsBarcode(el, '{{ $variant->sku }}', {
+    JsBarcode(el, '{{ $variant?->sku }}', {
         format: 'CODE128',
         width: 1.4,          
         height: 25,          

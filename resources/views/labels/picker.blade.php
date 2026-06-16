@@ -60,15 +60,15 @@
                         <td class="px-4 py-3 text-center">
                             <input type="checkbox"
                                 :checked="isSelected({{ $v->id }})"
-                                @change="toggleSelect({{ $v->id }}, '{{ addslashes($v->sku) }}', $event.target.checked)"
+                                @change="toggleSelect({{ $v->id }}, '{{ addslashes($v?->sku) }}', $event.target.checked)"
                                 class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
                         </td>
-                        <td class="px-4 py-3 font-mono text-xs font-semibold text-indigo-600">{{ $v->sku }}</td>
+                        <td class="px-4 py-3 font-mono text-xs font-semibold text-indigo-600">{{ $v?->sku }}</td>
                         <td class="px-4 py-3">
                             <p class="text-xs font-medium text-gray-800">{{ optional($v->product)->name ?? '—' }}</p>
                             <p class="text-xs text-gray-400">{{ optional($v->product->brand)->name ?? '' }}</p>
                         </td>
-                        <td class="px-4 py-3 text-xs text-gray-600">{{ $v->color->name }} / {{ $v->size->name }}</td>
+                        <td class="px-4 py-3 text-xs text-gray-600">{{ $v?->color?->name }} / {{ $v?->size?->name }}</td>
                         <td class="px-4 py-3 text-right text-xs font-semibold text-gray-800">
                             Rp {{ number_format($v->sellPrice(), 0, ',', '.') }}
                         </td>

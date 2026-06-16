@@ -97,7 +97,7 @@
                             <tr class="hover:bg-gray-50">
                                 <td class="px-4 py-3 font-mono text-xs font-semibold text-indigo-600">
                                     {{ $inbound->reference_no }}</td>
-                                <td class="px-4 py-3 text-xs text-gray-700">{{ $inbound->warehouse->name }}</td>
+                                <td class="px-4 py-3 text-xs text-gray-700">{{ $inbound?->warehouse?->name }}</td>
                                 <td class="px-4 py-3 text-xs text-gray-600">{{ $inbound->supplier_name ?? '-' }}</td>
                                 <td class="px-4 py-3 text-center">
                                     <span

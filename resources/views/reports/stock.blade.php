@@ -152,10 +152,10 @@
                         @forelse($stocks as $stock)
                             @php $v = $stock->variant; @endphp
                             <tr class="hover:bg-gray-50">
-                                <td class="px-4 py-3 font-mono text-xs text-gray-700">{{ $v->sku }}</td>
-                                <td class="px-4 py-3 text-xs text-gray-800 font-medium">{{ $v->product->name }}</td>
+                                <td class="px-4 py-3 font-mono text-xs text-gray-700">{{ $v?->sku }}</td>
+                                <td class="px-4 py-3 text-xs text-gray-800 font-medium">{{ $v?->product?->name }}</td>
                                 <td class="px-4 py-3 text-xs text-gray-500">{{ $v->product->brand?->name ?? '—' }}</td>
-                                <td class="px-4 py-3 text-xs text-gray-600">{{ $v->color->name }} / {{ $v->size->name }}</td>
+                                <td class="px-4 py-3 text-xs text-gray-600">{{ $v?->color?->name }} / {{ $v?->size?->name }}</td>
                                 <td class="px-4 py-3 text-right text-xs font-semibold text-gray-800">
                                     {{ number_format($stock->qty) }}</td>
                             </tr>
