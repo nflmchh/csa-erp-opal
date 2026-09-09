@@ -9,15 +9,22 @@ use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
-use Maatwebsite\Excel\Concerns\WithStyles;
 use Maatwebsite\Excel\Concerns\WithTitle;
 use Maatwebsite\Excel\Events\AfterSheet;
-use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
 
-class SalesExport implements FromCollection, WithHeadings, WithMapping, ShouldAutoSize, WithTitle, WithStyles, WithEvents
+class SalesExport implements FromCollection, WithHeadings, WithMapping, ShouldAutoSize, WithTitle, WithEvents
 {
+    /** Kode format Rupiah: "Rp 1.234.567" (grouping ikut regional Excel). */
+    private const RP_FORMAT = '"Rp" #,##0';
+
     /** Kolom level-nota (A..J) yang di-merge untuk nota dengan >1 item. */
     private array $merges = [];
+
+    /** Baris pertama tiap nota (untuk ditebalkan), single maupun multi-item. */
+    private array $noteStartRows = [];
 
     public function __construct(
         protected ?string $storeId  = null,
@@ -64,24 +71,25 @@ class SalesExport implements FromCollection, WithHeadings, WithMapping, ShouldAu
             [$cash, $transfer] = $this->splitCashTransfer($sale);
             $itemCount = max(1, $sale->items->count());
             $start = $excelRow;
+            $this->noteStartRows[] = $start;
 
             foreach ($sale->items as $idx => $item) {
                 $rows[] = [
                     'sale_no'         => $idx === 0 ? $sale->sale_no : '',
                     'store'           => $idx === 0 ? $sale->store->name : '',
                     'payment'         => $idx === 0 ? $sale->paymentMethodLabel() : '',
-                    'tunai'           => $idx === 0 ? $cash : '',
-                    'transfer'        => $idx === 0 ? $transfer : '',
+                    'tunai'           => $idx === 0 ? $cash : null,
+                    'transfer'        => $idx === 0 ? $transfer : null,
                     'cashier'         => $idx === 0 ? ($sale->creator?->name ?? '-') : '',
-                    'subtotal_before' => $idx === 0 ? $sale->subtotal : '',
-                    'discount'        => $idx === 0 ? $sale->discount_amount : '',
-                    'total'           => $idx === 0 ? $sale->total_amount : '',
+                    'subtotal_before' => $idx === 0 ? (float) $sale->subtotal : null,
+                    'discount'        => $idx === 0 ? (float) $sale->discount_amount : null,
+                    'total'           => $idx === 0 ? (float) $sale->total_amount : null,
                     'date'            => $idx === 0 ? $sale->created_at->format('d/m/Y H:i') : '',
                     'product'         => $item->variant?->product?->name ?? 'Produk Terhapus',
                     'sku'             => ($item->variant?->sku ?? '-') . " (" . ($item->variant?->color?->name ?? '-') . " / " . ($item->variant?->size?->name ?? '-') . ")",
-                    'qty'             => $item->qty,
-                    'price'           => $item->unit_price,
-                    'subtotal'        => $item->subtotal,
+                    'qty'             => (int) $item->qty,
+                    'price'           => (float) $item->unit_price,
+                    'subtotal'        => (float) $item->subtotal,
                 ];
             }
 
@@ -128,9 +136,9 @@ class SalesExport implements FromCollection, WithHeadings, WithMapping, ShouldAu
     public function headings(): array
     {
         return [
-            'No. Penjualan', 'Toko', 'Metode Bayar', 'Tunai', 'Transfer/Non-Tunai', 'Kasir',
-            'Subtotal (Sblm Diskon)', 'Diskon', 'Total (Stlh Diskon)', 'Tanggal',
-            'Item', 'SKU / Variant', 'Qty', 'Harga Satuan', 'Subtotal Item',
+            'No. Penjualan', 'Toko', 'Metode Bayar', 'Tunai (Rp)', 'Transfer/Non-Tunai (Rp)', 'Kasir',
+            'Subtotal Sblm Diskon (Rp)', 'Diskon (Rp)', 'Total Stlh Diskon (Rp)', 'Tanggal',
+            'Item', 'SKU / Variant', 'Qty', 'Harga Satuan (Rp)', 'Subtotal Item (Rp)',
         ];
     }
 
@@ -141,24 +149,52 @@ class SalesExport implements FromCollection, WithHeadings, WithMapping, ShouldAu
 
     public function title(): string { return 'Laporan Penjualan'; }
 
-    public function styles(Worksheet $sheet): array
-    {
-        return [1 => ['font' => ['bold' => true]]];
-    }
-
     public function registerEvents(): array
     {
         return [
             AfterSheet::class => function (AfterSheet $event) {
                 $ws = $event->sheet->getDelegate();
+                $lastRow = max(2, $ws->getHighestRow());
+                $lastCol = 'O';
 
                 // Merge kolom level-nota untuk nota dengan >1 item (keterangan tidak kosong).
                 foreach ($this->merges as $range) {
                     $ws->mergeCells($range);
                 }
 
-                // Rata tengah vertikal untuk kolom level-nota (A..J) agar sel merge rapi.
-                $ws->getStyle('A:J')->getAlignment()->setVertical('center');
+                // ── Header (baris 1): bold putih di atas indigo, rata tengah, sedikit lebih tinggi.
+                $ws->getStyle("A1:{$lastCol}1")->applyFromArray([
+                    'font'      => ['bold' => true, 'size' => 11, 'color' => ['rgb' => 'FFFFFF']],
+                    'fill'      => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '3730A3']],
+                    'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER, 'wrapText' => true],
+                ]);
+                $ws->getRowDimension(1)->setRowHeight(30);
+                $ws->freezePane('A2');
+                $ws->setAutoFilter("A1:{$lastCol}1");
+
+                // ── Border tipis di seluruh tabel + rata tengah vertikal semua baris.
+                $ws->getStyle("A1:{$lastCol}{$lastRow}")->applyFromArray([
+                    'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => 'D1D5DB']]],
+                ]);
+                $ws->getStyle("A1:{$lastCol}{$lastRow}")->getAlignment()->setVertical(Alignment::VERTICAL_CENTER);
+
+                // ── Rata kanan untuk semua kolom angka/Rupiah, rata tengah untuk Qty & Tanggal.
+                $ws->getStyle("D2:E{$lastRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+                $ws->getStyle("G2:I{$lastRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+                $ws->getStyle("N2:O{$lastRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+                $ws->getStyle("M2:M{$lastRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                $ws->getStyle("J2:J{$lastRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+                // ── Format Rupiah "Rp 1.234.567" (bukan angka mentah tanpa pemisah ribuan).
+                foreach (['D', 'E', 'G', 'H', 'I', 'N', 'O'] as $col) {
+                    $ws->getStyle("{$col}2:{$col}{$lastRow}")->getNumberFormat()->setFormatCode(self::RP_FORMAT);
+                }
+                $ws->getStyle("M2:M{$lastRow}")->getNumberFormat()->setFormatCode('#,##0');
+
+                // ── Baris nota (kolom A berisi No. Penjualan) ditebalkan agar tabel mudah dipindai.
+                foreach ($this->noteStartRows as $row) {
+                    $ws->getStyle("A{$row}:J{$row}")->getFont()->setBold(true);
+                }
             },
         ];
     }
