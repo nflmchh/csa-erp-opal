@@ -23,6 +23,7 @@ class SalesExport implements FromCollection, WithHeadings, WithMapping, ShouldAu
         protected ?string $storeId  = null,
         protected ?string $dateFrom = null,
         protected ?string $dateTo   = null,
+        protected ?string $metode   = null,
     ) {}
 
     public function collection(): Collection
@@ -42,7 +43,8 @@ class SalesExport implements FromCollection, WithHeadings, WithMapping, ShouldAu
         ])
             ->when($this->storeId,  fn($q) => $q->where('store_id', $this->storeId))
             ->when($this->dateFrom, fn($q) => $q->whereDate('created_at', '>=', $this->dateFrom))
-            ->when($this->dateTo,   fn($q) => $q->whereDate('created_at', '<=', $this->dateTo));
+            ->when($this->dateTo,   fn($q) => $q->whereDate('created_at', '<=', $this->dateTo))
+            ->filterPaymentType($this->metode);
 
         if (!$isGlobal && $user) {
             $storeIds = $user->stores()->pluck('stores.id')->toArray();
