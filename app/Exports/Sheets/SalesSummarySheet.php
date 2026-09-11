@@ -104,14 +104,14 @@ class SalesSummarySheet implements FromArray, ShouldAutoSize, WithTitle, WithEve
         $rows = [];
         $rows[] = ['RINGKASAN PENJUALAN'];
         $rows[] = ['Periode: ' . $this->periodLabel];
-        $rows[] = [];
+        $rows[] = [null];
 
         $this->kpiHeaderRow = count($rows) + 1;
         $rows[] = ['Total Pendapatan (Rp)', 'Total Transaksi', 'Total Item Terjual', 'Rata-rata / Transaksi (Rp)'];
         $this->kpiValueRow = count($rows) + 1;
         $rows[] = [$totalRevenue, $totalOrders, $totalItems, $avgPerOrder];
-        $rows[] = [];
-        $rows[] = [];
+        $rows[] = [null];
+        $rows[] = [null];
 
         $this->dailyHeaderRow = count($rows) + 1;
         $rows[] = ['Tanggal', 'Total Transaksi', 'Total Pendapatan (Rp)'];
@@ -124,8 +124,8 @@ class SalesSummarySheet implements FromArray, ShouldAutoSize, WithTitle, WithEve
             }
         }
         $this->dailyDataEnd = count($rows);
-        $rows[] = [];
-        $rows[] = [];
+        $rows[] = [null];
+        $rows[] = [null];
 
         $this->productHeaderRow = count($rows) + 1;
         $rows[] = ['Produk', 'Qty Terjual', 'Pendapatan (Rp)'];
@@ -138,8 +138,8 @@ class SalesSummarySheet implements FromArray, ShouldAutoSize, WithTitle, WithEve
             }
         }
         $this->productDataEnd = count($rows);
-        $rows[] = [];
-        $rows[] = [];
+        $rows[] = [null];
+        $rows[] = [null];
 
         $this->brandHeaderRow = count($rows) + 1;
         $rows[] = ['Brand', 'Qty Terjual', 'Pendapatan (Rp)'];
